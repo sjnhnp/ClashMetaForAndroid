@@ -66,8 +66,9 @@ class ServiceStore(context: Context) {
         defaultValue = true
     )
 
-    var githubMirror by store.string(
+    var githubMirror: String? by store.typedString(
         key = "github_mirror",
-        defaultValue = ""
+        from = { it.ifBlank { null } },
+        to = { it ?: "" }
     )
 }

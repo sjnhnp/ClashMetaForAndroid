@@ -25,7 +25,6 @@ Download the latest release from [Releases](https://github.com/sjnhnp/ClashMetaF
 
 | Feature | Original | This Fork |
 |---------|----------|-----------|
-| APK Size | ~80MB (universal) | ~30MB (arm64 only) |
 | Languages | 8 languages | English + 简体中文 |
 | Override Feature | ✅ | ❌ Removed |
 | Meta Features Page | ✅ | ❌ Removed |
@@ -39,48 +38,3 @@ Example mirror URLs:
 - `https://ghproxy.com`
 
 > **Note**: This only affects profile URL downloads. Rule-sets and providers defined inside your config file are downloaded by the Mihomo kernel directly. For those, you need to use mirrored URLs in your config file.
-
-## 🔨 Build
-
-### Prerequisites
-
-- OpenJDK 21
-- Android SDK
-- Android NDK r27b
-- CMake
-- Go 1.22+
-
-### Steps
-
-1. Clone with submodules:
-   ```bash
-   git clone --recursive https://github.com/sjnhnp/ClashMetaForAndroid.git
-   ```
-
-2. Create `local.properties`:
-   ```properties
-   sdk.dir=/path/to/android-sdk
-   ```
-
-3. Build:
-   ```bash
-   ./gradlew assembleMetaRelease
-   ```
-
-## 📝 Automation
-
-Package name: `com.github.kr328.clash.meta`
-
-- **Toggle service**: Action `com.github.kr328.clash.meta.action.TOGGLE_CLASH`
-- **Start service**: Action `com.github.kr328.clash.meta.action.START_CLASH`
-- **Stop service**: Action `com.github.kr328.clash.meta.action.STOP_CLASH`
-- **Import profile**: URL Scheme `clash://install-config?url=<encoded URL>`
-
-## 🙏 Credits
-
-- [Clash Meta for Android](https://github.com/MetaCubeX/ClashMetaForAndroid) - Original project
-- [Mihomo](https://github.com/MetaCubeX/mihomo) - Clash Meta kernel
-
-## 📄 License
-
-GPL-3.0 License

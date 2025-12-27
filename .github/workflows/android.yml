@@ -75,19 +75,35 @@ jobs:
 
       - name: Setup Signing (for release)
         if: steps.build_type.outputs.is_release == 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           rm -f release.keystore signing.properties
-          keytool -genkey -v -keystore release.keystore \
-            -alias clash-meta \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass clashmetaandroid \
-            -keypass clashmetaandroid \
-            -dname "CN=ClashMetaForAndroid, OU=Dev, O=CMFA, L=Beijing, ST=Beijing, C=CN"
-          cat > signing.properties << EOF
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "Using keystore from GitHub Secrets"
+            echo "$KEYSTORE_BASE64" | base64 -d > release.keystore
+            cat > signing.properties << EOF
+          keystore.password=${KEYSTORE_PASSWORD}
+          key.alias=${KEY_ALIAS}
+          key.password=${KEY_PASSWORD}
+          EOF
+          else
+            echo "Generating new keystore (WARNING: APK cannot be upgraded from previous versions)"
+            keytool -genkey -v -keystore release.keystore \
+              -alias clash-meta \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass clashmetaandroid \
+              -keypass clashmetaandroid \
+              -dname "CN=ClashMetaForAndroid, OU=Dev, O=CMFA, L=Beijing, ST=Beijing, C=CN"
+            cat > signing.properties << EOF
           keystore.password=clashmetaandroid
           key.alias=clash-meta
           key.password=clashmetaandroid
           EOF
+          fi
 
       - name: Build Release APK
         if: steps.build_type.outputs.is_release == 'true'

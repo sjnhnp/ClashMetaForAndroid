@@ -76,6 +76,25 @@ jobs:
             echo "version=debug" >> $GITHUB_OUTPUT
           fi
 
+      - name: Update version in build.gradle.kts
+        if: steps.build_type.outputs.is_release == 'true'
+        run: |
+          VERSION="${{ steps.build_type.outputs.version }}"
+          # Remove 'v' prefix if present
+          VERSION_NAME="${VERSION#v}"
+          # Convert version to code (e.g., 3.0.3 -> 300003)
+          VERSION_CODE=$(echo "$VERSION_NAME" | awk -F. '{printf "%d%02d%02d", $1, $2, $3}')
+          
+          echo "Updating version to: $VERSION_NAME (code: $VERSION_CODE)"
+          
+          # Update versionName
+          sed -i "s/versionName = \"[^\"]*\"/versionName = \"$VERSION_NAME\"/" build.gradle.kts
+          # Update versionCode
+          sed -i "s/versionCode = [0-9]*/versionCode = $VERSION_CODE/" build.gradle.kts
+          
+          # Verify
+          grep -E "versionName|versionCode" build.gradle.kts | head -2
+
       - name: Setup Signing (for release)
         if: steps.build_type.outputs.is_release == 'true'
         env:

@@ -65,4 +65,9 @@ class ServiceStore(context: Context) {
         key = "dynamic_notification",
         defaultValue = true
     )
+
+    var githubMirror by store.string(
+        key = "github_mirror",
+        defaultValue = ""
+    )
 }

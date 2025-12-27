@@ -1,87 +1,105 @@
-## Clash Meta for Android
+# Clash Meta for Android (Lite)
 
-A Graphical user interface of [Clash.Meta](https://github.com/MetaCubeX/Clash.Meta) for Android
+[![Build Android](https://github.com/sjnhnp/ClashMetaForAndroid/actions/workflows/android.yml/badge.svg)](https://github.com/sjnhnp/ClashMetaForAndroid/actions/workflows/android.yml)
 
-### Feature
+A lightweight fork of [Clash Meta for Android](https://github.com/MetaCubeX/ClashMetaForAndroid) with simplified features and optimized APK size.
 
-Feature of [Clash.Meta](https://github.com/MetaCubeX/Clash.Meta)
+## ✨ Features
 
-[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
-     alt="Get it on F-Droid"
-     height="80">](https://f-droid.org/packages/com.github.metacubex.clash.meta/)
+- 🚀 **Lightweight** - Removed non-essential features, focused on core proxy functionality
+- 📱 **ARM64 Only** - Optimized build for modern devices (~30MB APK)
+- 🌐 **GitHub Acceleration** - Built-in GitHub mirror support for users in China
+- 🇬🇧🇨🇳 **Bilingual** - English and Simplified Chinese only
+- 🔄 **Auto Update Kernel** - Always uses the latest Mihomo Alpha kernel
 
-### Requirement
+## 📥 Download
 
+Download the latest release from [Releases](https://github.com/sjnhnp/ClashMetaForAndroid/releases).
+
+**Requirements:**
 - Android 5.0+ (minimum)
-- Android 7.0+ (recommend)
-- `armeabi-v7a` , `arm64-v8a`, `x86` or `x86_64` Architecture
+- Android 7.0+ (recommended)
+- **ARM64-v8a** architecture only
 
-### Build
+## 🔧 Differences from Original
 
-1. Update submodules
+| Feature | Original | This Fork |
+|---------|----------|-----------|
+| APK Size | ~80MB (universal) | ~30MB (arm64 only) |
+| Languages | 8 languages | English + 简体中文 |
+| Override Feature | ✅ | ❌ Removed |
+| Meta Features Page | ✅ | ❌ Removed |
+| GitHub Mirror | ❌ | ✅ Built-in support |
 
+## 🌐 GitHub Acceleration
+
+For users in China, you can configure a GitHub mirror in **App Settings > Network > GitHub Acceleration**.
+
+Example mirror URLs:
+- `https://ghfast.top`
+- `https://ghproxy.com`
+- `https://mirror.ghproxy.com`
+
+This will automatically proxy GitHub URLs when downloading profiles.
+
+## 🔨 Build
+
+### Prerequisites
+
+- OpenJDK 21
+- Android SDK
+- Android NDK r27b
+- CMake
+- Go 1.22+
+
+### Steps
+
+1. Clone with submodules:
    ```bash
-   git submodule update --init --recursive
+   git clone --recursive https://github.com/sjnhnp/ClashMetaForAndroid.git
+   cd ClashMetaForAndroid
    ```
 
-2. Install **OpenJDK 11**, **Android SDK**, **CMake** and **Golang**
+2. Update Mihomo kernel to latest Alpha:
+   ```bash
+   cd core/src/foss/golang/clash
+   git fetch origin Alpha
+   git checkout FETCH_HEAD
+   cd ../../../../..
+   ```
 
-3. Create `local.properties` in project root with
-
+3. Create `local.properties`:
    ```properties
    sdk.dir=/path/to/android-sdk
    ```
 
-4. (Optional) Custom app package name. Add the following configuration to `local.properties`.
-
+4. Create `signing.properties` (for release builds):
    ```properties
-   # config your ownn applicationId, or it will be 'com.github.metacubex.clash'
-   custom.application.id=com.my.compile.clash
-   # remove application id suffix, or the applicaion id will be 'com.github.metacubex.clash.alpha'
-   remove.suffix=true
-
-5. Create `signing.properties` in project root with
-
-   ```properties
-   keystore.path=/path/to/keystore/file
-   keystore.password=<key store password>
-   key.alias=<key alias>
-   key.password=<key password>
+   keystore.password=<password>
+   key.alias=<alias>
+   key.password=<password>
    ```
 
-6. Build
-
+5. Build:
    ```bash
-   ./gradlew app:assembleAlphaRelease
+   ./gradlew assembleMetaRelease
    ```
 
-### Automation
+## 📝 Automation
 
-APP package name is `com.github.metacubex.clash.meta`
+Package name: `com.github.kr328.clash.meta`
 
-- Toggle Clash.Meta service status
-  - Send intent to activity `com.github.kr328.clash.ExternalControlActivity` with action `com.github.metacubex.clash.meta.action.TOGGLE_CLASH`
-- Start Clash.Meta service
-  - Send intent to activity `com.github.kr328.clash.ExternalControlActivity` with action `com.github.metacubex.clash.meta.action.START_CLASH`
-- Stop Clash.Meta service
-  - Send intent to activity `com.github.kr328.clash.ExternalControlActivity` with action `com.github.metacubex.clash.meta.action.STOP_CLASH`
-- Import a profile
-  - URL Scheme `clash://install-config?url=<encoded URI>` or `clashmeta://install-config?url=<encoded URI>`
+- **Toggle service**: Send intent to `com.github.kr328.clash.ExternalControlActivity` with action `com.github.kr328.clash.meta.action.TOGGLE_CLASH`
+- **Start service**: Action `com.github.kr328.clash.meta.action.START_CLASH`
+- **Stop service**: Action `com.github.kr328.clash.meta.action.STOP_CLASH`
+- **Import profile**: URL Scheme `clash://install-config?url=<encoded URL>` or `clashmeta://install-config?url=<encoded URL>`
 
-### Contribution and Project Maintenance
+## 🙏 Credits
 
-#### Meta Kernel
+- [Clash Meta for Android](https://github.com/MetaCubeX/ClashMetaForAndroid) - Original project
+- [Mihomo](https://github.com/MetaCubeX/mihomo) - Clash Meta kernel
+- [Clash for Android](https://github.com/Kr328/ClashForAndroid) - Original Clash GUI
 
-- CMFA uses the kernel from `android-real` branch under `MetaCubeX/Clash.Meta`, which is a merge of the main `Alpha` branch and `android-open`.
-  - If you want to contribute to the kernel, make PRs to `Alpha` branch of the Meta kernel repository.
-  - If you want to contribute Android-specific patches to the kernel, make PRs to  `android-open` branch of the Meta kernel repository.
+## 📄 License
 
-#### Maintenance
-
-- When `MetaCubeX/Clash.Meta` kernel is updated to a new version, the `Update Dependencies` actions in this repo will be triggered automatically.
-  - It will pull the new version of the meta kernel, update all the golang dependencies, and create a PR without manual intervention.
-  - If there is any compile error in PR, you need to fix it before merging. Alternatively, you may merge the PR directly.
-- Manually triggering `Build Pre-Release` actions will compile and publish a `PreRelease` version.
-- Manually triggering `Build Release` actions will compile, tag and publish a `Release` version.
-  - You must fill the blank `Release Tag` with the tag you want to release in the format of `v1.2.3`.
-  - `versionName` and `versionCode` in `build.gradle.kts` will be automatically bumped to the tag you filled above.
+This project is licensed under the GPL-3.0 License - see the [LICENSE](LICENSE) file for details.

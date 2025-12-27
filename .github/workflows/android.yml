@@ -21,10 +21,12 @@ jobs:
 
       - name: Update Submodules (Mihomo Kernel)
         run: |
-          git submodule update --remote --recursive
+          git submodule update --init --recursive
           cd core/src/foss/golang/clash
-          git checkout Alpha || git checkout Prerelease-Alpha || git checkout main
-          git pull origin Alpha || git pull origin Prerelease-Alpha || git pull origin main
+          git remote set-url origin https://github.com/MetaCubeX/mihomo.git
+          git fetch origin Alpha
+          git checkout Alpha
+          git pull origin Alpha
 
       - name: Setup Java
         uses: actions/setup-java@v4

@@ -58,8 +58,8 @@ subprojects {
             minSdk = 21
             targetSdk = 35
 
-            versionName = "2.11.21"
-            versionCode = 211021
+            versionName = "3.0.1"
+            versionCode = 300001
 
             resValue("string", "release_name", "v$versionName")
             resValue("integer", "release_code", "$versionCode")
@@ -185,10 +185,7 @@ subprojects {
 
             splits {
                 abi {
-                    isEnable = true
-                    isUniversalApk = true
-                    reset()
-                    include("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+                    isEnable = false
                 }
             }
         }

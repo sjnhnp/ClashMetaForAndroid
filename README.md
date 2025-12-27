@@ -42,57 +42,7 @@ Example mirror URLs:
 
 This will automatically proxy GitHub URLs when downloading profiles.
 
-## 🔨 Build
 
-### Prerequisites
-
-- OpenJDK 21
-- Android SDK
-- Android NDK r27b
-- CMake
-- Go 1.22+
-
-### Steps
-
-1. Clone with submodules:
-   ```bash
-   git clone --recursive https://github.com/sjnhnp/ClashMetaForAndroid.git
-   cd ClashMetaForAndroid
-   ```
-
-2. Update Mihomo kernel to latest Alpha:
-   ```bash
-   cd core/src/foss/golang/clash
-   git fetch origin Alpha
-   git checkout FETCH_HEAD
-   cd ../../../../..
-   ```
-
-3. Create `local.properties`:
-   ```properties
-   sdk.dir=/path/to/android-sdk
-   ```
-
-4. Create `signing.properties` (for release builds):
-   ```properties
-   keystore.password=<password>
-   key.alias=<alias>
-   key.password=<password>
-   ```
-
-5. Build:
-   ```bash
-   ./gradlew assembleMetaRelease
-   ```
-
-## 📝 Automation
-
-Package name: `com.github.kr328.clash.meta`
-
-- **Toggle service**: Send intent to `com.github.kr328.clash.ExternalControlActivity` with action `com.github.kr328.clash.meta.action.TOGGLE_CLASH`
-- **Start service**: Action `com.github.kr328.clash.meta.action.START_CLASH`
-- **Stop service**: Action `com.github.kr328.clash.meta.action.STOP_CLASH`
-- **Import profile**: URL Scheme `clash://install-config?url=<encoded URL>` or `clashmeta://install-config?url=<encoded URL>`
 
 ## 🙏 Credits
 

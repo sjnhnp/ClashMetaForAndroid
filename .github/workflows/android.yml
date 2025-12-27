@@ -2,6 +2,12 @@ name: Build Android
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v2.11.22). Leave empty for debug build.'
+        required: false
+        default: ''
+        type: string
   push:
     branches:
       - main
@@ -53,8 +59,22 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Setup Signing (auto-generate for release)
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Determine build type
+        id: build_type
+        run: |
+          if [[ "${{ github.event.inputs.version }}" != "" ]]; then
+            echo "is_release=true" >> $GITHUB_OUTPUT
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "is_release=true" >> $GITHUB_OUTPUT
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "is_release=false" >> $GITHUB_OUTPUT
+            echo "version=debug" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Signing (for release)
+        if: steps.build_type.outputs.is_release == 'true'
         run: |
           keytool -genkey -v -keystore release.keystore \
             -alias clash-meta \
@@ -69,31 +89,27 @@ jobs:
           EOF
 
       - name: Build Release APK
-        if: startsWith(github.ref, 'refs/tags/')
+        if: steps.build_type.outputs.is_release == 'true'
         run: ./gradlew assembleMetaRelease --stacktrace
 
       - name: Build Debug APK
-        if: "!startsWith(github.ref, 'refs/tags/')"
+        if: steps.build_type.outputs.is_release == 'false'
         run: ./gradlew assembleMetaDebug --stacktrace
 
       - name: Upload Debug APK
-        if: "!startsWith(github.ref, 'refs/tags/')"
+        if: steps.build_type.outputs.is_release == 'false'
         uses: actions/upload-artifact@v4
         with:
           name: clash-meta-android-debug
           path: app/build/outputs/apk/meta/debug/*.apk
           retention-days: 30
 
-      - name: Get Version
-        if: startsWith(github.ref, 'refs/tags/')
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-
       - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: steps.build_type.outputs.is_release == 'true'
         uses: softprops/action-gh-release@v1
         with:
-          name: ${{ steps.get_version.outputs.VERSION }}
+          tag_name: ${{ steps.build_type.outputs.version }}
+          name: ${{ steps.build_type.outputs.version }}
           draft: false
           prerelease: false
           files: |

@@ -19,6 +19,13 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Update Submodules (Mihomo Kernel)
+        run: |
+          git submodule update --remote --recursive
+          cd core/src/foss/golang/clash
+          git checkout Alpha || git checkout Prerelease-Alpha || git checkout main
+          git pull origin Alpha || git pull origin Prerelease-Alpha || git pull origin main
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:

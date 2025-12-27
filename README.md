@@ -25,7 +25,6 @@ Download the latest release from [Releases](https://github.com/sjnhnp/ClashMetaF
 
 | Feature | Original | This Fork |
 |---------|----------|-----------|
-| APK Size | ~80MB (universal) | ~30MB (arm64 only) |
 | Languages | 8 languages | English + 简体中文 |
 | Override Feature | ✅ | ❌ Removed |
 | Meta Features Page | ✅ | ❌ Removed |
@@ -37,12 +36,8 @@ For users in China, you can configure a GitHub mirror in **App Settings > Networ
 
 Example mirror URLs:
 - `https://ghfast.top`
-- `https://ghproxy.com`
-- `https://mirror.ghproxy.com`
 
 This will automatically proxy GitHub URLs when downloading profiles.
-
-
 
 ## 🙏 Credits
 

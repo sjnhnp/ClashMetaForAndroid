@@ -25,7 +25,7 @@ jobs:
           cd core/src/foss/golang/clash
           git remote set-url origin https://github.com/MetaCubeX/mihomo.git
           git fetch origin Alpha
-          git checkout -f origin/Alpha
+          git checkout -f FETCH_HEAD
           echo "Updated Mihomo kernel to:"
           git log -1 --format="%h - %s"
 

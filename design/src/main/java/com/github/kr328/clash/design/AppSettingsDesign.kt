@@ -87,6 +87,17 @@ class AppSettingsDesign(
             ) {
                 enabled = !running
             }
+
+            category(R.string.network)
+
+            editableText(
+                value = srvStore::githubMirror,
+                adapter = NullableTextAdapter.String,
+                icon = R.drawable.ic_baseline_cloud_download,
+                title = R.string.github_mirror,
+                placeholder = R.string.github_mirror_summary,
+                empty = R.string.github_mirror_empty,
+            )
         }
 
         binding.content.addView(screen.root)

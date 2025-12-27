@@ -260,4 +260,8 @@
     <string name="external_control_stopped">Clash.Meta 服务已停止</string>
     <string name="import_from_qr_no_permission">相机权限受限，请前往设置开启。</string>
     <string name="import_from_qr_exception">发生系统未知异常，操作失败。</string>
+
+    <string name="github_mirror">GitHub 加速</string>
+    <string name="github_mirror_summary">GitHub 地址前缀（如 https://ghfast.top）</string>
+    <string name="github_mirror_empty">未配置</string>
 </resources>

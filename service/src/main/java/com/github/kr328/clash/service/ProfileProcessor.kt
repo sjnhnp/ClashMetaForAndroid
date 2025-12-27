@@ -11,6 +11,7 @@ import com.github.kr328.clash.service.data.PendingDao
 import com.github.kr328.clash.service.model.Profile
 import com.github.kr328.clash.service.remote.IFetchObserver
 import com.github.kr328.clash.service.store.ServiceStore
+import com.github.kr328.clash.service.util.GithubMirror
 import com.github.kr328.clash.service.util.importedDir
 import com.github.kr328.clash.service.util.pendingDir
 import com.github.kr328.clash.service.util.processingDir
@@ -51,7 +52,11 @@ object ProfileProcessor {
                 val force = snapshot.type != Profile.Type.File
                 var cb = callback
 
-                Clash.fetchAndValid(context.processingDir, snapshot.source, force) {
+                // Apply GitHub mirror if configured
+                val store = ServiceStore(context)
+                val sourceUrl = GithubMirror.apply(snapshot.source, store.githubMirror)
+
+                Clash.fetchAndValid(context.processingDir, sourceUrl, force) {
                     try {
                         cb?.updateStatus(it)
                     } catch (e: Exception) {
@@ -179,7 +184,11 @@ object ProfileProcessor {
 
                 var cb = callback
 
-                Clash.fetchAndValid(context.processingDir, snapshot.source, true) {
+                // Apply GitHub mirror if configured
+                val store = ServiceStore(context)
+                val sourceUrl = GithubMirror.apply(snapshot.source, store.githubMirror)
+
+                Clash.fetchAndValid(context.processingDir, sourceUrl, true) {
                     try {
                         cb?.updateStatus(it)
                     } catch (e: Exception) {

@@ -26,13 +26,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update Submodules (Mihomo Kernel)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
           git submodule update --init --recursive
           cd core/src/foss/golang/clash
-          git remote set-url origin https://github.com/MetaCubeX/mihomo.git
-          git fetch origin Alpha
+          git fetch https://github.com/MetaCubeX/mihomo.git Alpha
           git checkout -f FETCH_HEAD
           echo "Updated Mihomo kernel to:"
           git log -1 --format="%h - %s"

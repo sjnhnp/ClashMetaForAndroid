@@ -42,19 +42,7 @@
                     app:icon="@drawable/ic_baseline_dns"
                     app:text="@string/network" />
 
-                <com.github.kr328.clash.design.view.ActionLabel
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:onClick="@{() -> self.request(Request.StartOverride)}"
-                    app:icon="@drawable/ic_baseline_extension"
-                    app:text="@string/override" />
-
-                <com.github.kr328.clash.design.view.ActionLabel
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:onClick="@{() -> self.request(Request.StartMetaFeature)}"
-                    app:icon="@drawable/ic_baseline_meta"
-                    app:text="@string/meta_features" />
+                <!-- 已精简：移除配置覆写和Meta特性设置入口 -->
 
             </LinearLayout>
         </com.github.kr328.clash.design.view.ObservableScrollView>

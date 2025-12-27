@@ -35,8 +35,15 @@ jobs:
           git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
           git submodule update --init --recursive
           cd core/src/foss/golang/clash
-          git fetch https://github.com/MetaCubeX/mihomo.git Alpha
-          git checkout -f FETCH_HEAD
+          # Fetch latest stable release tag instead of Alpha branch
+          git fetch https://github.com/MetaCubeX/mihomo.git --tags
+          LATEST_TAG=$(git tag -l 'v*' | grep -v 'alpha\|beta\|rc' | sort -V | tail -1)
+          if [ -z "$LATEST_TAG" ]; then
+            echo "No stable release tag found, using latest tag"
+            LATEST_TAG=$(git tag -l 'v*' | sort -V | tail -1)
+          fi
+          echo "Using Mihomo kernel version: $LATEST_TAG"
+          git checkout -f "$LATEST_TAG"
           echo "Updated Mihomo kernel to:"
           git log -1 --format="%h - %s"
 

@@ -152,16 +152,8 @@
             android:configChanges="uiMode"
             android:exported="false"
             android:label="@string/app" />
-        <activity
-            android:name=".OverrideSettingsActivity"
-            android:configChanges="uiMode"
-            android:exported="false"
-            android:label="@string/override" />
-        <activity
-            android:name=".MetaFeatureSettingsActivity"
-            android:configChanges="uiMode"
-            android:exported="false"
-            android:label="@string/meta_features" />
+        <!-- 已移除: OverrideSettingsActivity -->
+        <!-- 已移除: MetaFeatureSettingsActivity -->
         <activity
             android:name=".AccessControlActivity"
             android:configChanges="uiMode"

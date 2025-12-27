@@ -38,11 +38,11 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew assembleMetaRelease --stacktrace
+        run: ./gradlew assembleMetaDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: clash-meta-android
-          path: app/build/outputs/apk/meta/release/*.apk
+          name: clash-meta-android-debug
+          path: app/build/outputs/apk/meta/debug/*.apk
           retention-days: 30

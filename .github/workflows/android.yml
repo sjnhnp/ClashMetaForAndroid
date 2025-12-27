@@ -76,6 +76,7 @@ jobs:
       - name: Setup Signing (for release)
         if: steps.build_type.outputs.is_release == 'true'
         run: |
+          rm -f release.keystore signing.properties
           keytool -genkey -v -keystore release.keystore \
             -alias clash-meta \
             -keyalg RSA -keysize 2048 -validity 10000 \

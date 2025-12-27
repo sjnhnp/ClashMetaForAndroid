@@ -35,6 +35,10 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Accept Android Licenses
+        run: |
+          yes | sdkmanager --licenses || true
+
       - name: Setup NDK
         uses: nttld/setup-ndk@v1
         with:

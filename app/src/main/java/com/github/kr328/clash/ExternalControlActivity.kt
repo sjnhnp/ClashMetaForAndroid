@@ -1,7 +1,9 @@
 package com.github.kr328.clash
 
 import android.app.Activity
+import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -29,6 +31,15 @@ class ExternalControlActivity : Activity(), CoroutineScope by MainScope() {
         when(intent.action) {
             Intent.ACTION_VIEW -> {
                 val uri = intent.data ?: return finish()
+                
+                // 处理恢复图标的 URL scheme: clash://restore-icon 或 clashmeta://restore-icon
+                if (uri.host == "restore-icon") {
+                    restoreAppIcon()
+                    startActivity(MainActivity::class.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    return finish()
+                }
+                
+                // 处理导入配置的 URL scheme
                 val url = uri.getQueryParameter("url") ?: return finish()
 
                 launch {
@@ -89,5 +100,19 @@ class ExternalControlActivity : Activity(), CoroutineScope by MainScope() {
     private fun stopClash() {
         stopClashService()
         Toast.makeText(this, R.string.external_control_stopped, Toast.LENGTH_LONG).show()
+    }
+    
+    private fun restoreAppIcon() {
+        val aliasComponentName = ComponentName(this, mainActivityAlias)
+        val currentState = packageManager.getComponentEnabledSetting(aliasComponentName)
+        
+        if (currentState == PackageManager.COMPONENT_ENABLED_STATE_DISABLED) {
+            packageManager.setComponentEnabledSetting(
+                aliasComponentName,
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                PackageManager.DONT_KILL_APP
+            )
+            Toast.makeText(this, "App icon restored", Toast.LENGTH_SHORT).show()
+        }
     }
 }

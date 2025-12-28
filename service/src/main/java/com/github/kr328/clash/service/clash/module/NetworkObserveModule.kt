@@ -14,9 +14,9 @@ import kotlinx.coroutines.withContext
 import java.net.InetAddress
 import java.util.concurrent.ConcurrentHashMap
 
-class NetworkObserveModule(service: Service) : Module<Network>(service) {
+class NetworkObserveModule(service: Service) : Module<Network?>(service) {
     private val connectivity = service.getSystemService<ConnectivityManager>()!!
-    private val networks: Channel<Network> = Channel(Channel.UNLIMITED)
+    private val networks: Channel<Network?> = Channel(Channel.UNLIMITED)
     private val request = NetworkRequest.Builder().apply {
         addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
         addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
@@ -42,6 +42,8 @@ class NetworkObserveModule(service: Service) : Module<Network>(service) {
         override fun onAvailable(network: Network) {
             Log.i("NetworkObserve onAvailable network=$network")
             networkInfos[network] = NetworkInfo()
+            
+            networks.trySend(queryBestNetwork())
         }
 
         override fun onLosing(network: Network, maxMsToLive: Int) {
@@ -49,7 +51,7 @@ class NetworkObserveModule(service: Service) : Module<Network>(service) {
             networkInfos[network]?.losingMs = System.currentTimeMillis() + maxMsToLive
             notifyDnsChange()
 
-            networks.trySend(network)
+            networks.trySend(queryBestNetwork())
         }
 
         override fun onLost(network: Network) {
@@ -57,7 +59,7 @@ class NetworkObserveModule(service: Service) : Module<Network>(service) {
             networkInfos.remove(network)
             notifyDnsChange()
 
-            networks.trySend(network)
+            networks.trySend(queryBestNetwork())
         }
 
         override fun onLinkPropertiesChanged(network: Network, linkProperties: LinkProperties) {
@@ -65,7 +67,7 @@ class NetworkObserveModule(service: Service) : Module<Network>(service) {
             networkInfos[network]?.dnsList = linkProperties.dnsServers
             notifyDnsChange()
 
-            networks.trySend(network)
+            networks.trySend(queryBestNetwork())
         }
 
         override fun onUnavailable() {
@@ -114,6 +116,10 @@ class NetworkObserveModule(service: Service) : Module<Network>(service) {
             // TRANSPORT_LOWPAN / TRANSPORT_THREAD / TRANSPORT_WIFI_AWARE are not for general internet access, which will not set as default route.
             else -> 20
         } + (if (entry.value.isAvailable()) 0 else 10)
+    }
+
+    private fun queryBestNetwork(): Network? {
+        return networkInfos.asSequence().minByOrNull { networkToInt(it) }?.key
     }
 
     private fun notifyDnsChange() {

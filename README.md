@@ -16,11 +16,6 @@ A lightweight fork of [Clash Meta for Android](https://github.com/MetaCubeX/Clas
 
 Download the latest release from [Releases](https://github.com/sjnhnp/ClashMetaForAndroid/releases).
 
-**Requirements:**
-- Android 5.0+ (minimum)
-- Android 7.0+ (recommended)
-- **ARM64-v8a** architecture only
-
 ## 🔧 Differences from Original
 
 | Feature | Original | This Fork |
@@ -35,6 +30,5 @@ For users in China, you can configure a GitHub mirror in **App Settings > Networ
 
 Example mirror URLs:
 - `https://ghfast.top`
-- `https://ghproxy.com`
 
 > **Note**: This only affects profile URL downloads. Rule-sets and providers defined inside your config file are downloaded by the Mihomo kernel directly. For those, you need to use mirrored URLs in your config file.

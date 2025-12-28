@@ -39,35 +39,32 @@ class MainApplication : Application() {
         clashDir.mkdirs()
 
         val updateDate = packageManager.getPackageInfo(packageName, 0).lastUpdateTime
-        val geoipFile = File(clashDir, "geoip.metadb")
-        if (geoipFile.exists() && geoipFile.lastModified() < updateDate) {
-            geoipFile.delete()
-        }
-        if (!geoipFile.exists()) {
-            FileOutputStream(geoipFile).use {
-                assets.open("geoip.metadb").copyTo(it)
+        
+        // Helper function to safely extract asset file if it exists in APK
+        fun extractAssetIfExists(assetName: String, targetFile: File) {
+            try {
+                if (targetFile.exists() && targetFile.lastModified() < updateDate) {
+                    targetFile.delete()
+                }
+                if (!targetFile.exists()) {
+                    assets.open(assetName).use { input ->
+                        FileOutputStream(targetFile).use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                    Log.d("Extracted $assetName to ${targetFile.path}")
+                }
+            } catch (e: java.io.FileNotFoundException) {
+                // Asset not bundled in APK, user needs to download it manually
+                Log.d("Asset $assetName not found in APK, skipping extraction")
+            } catch (e: Exception) {
+                Log.w("Failed to extract $assetName: ${e.message}")
             }
         }
-
-        val geositeFile = File(clashDir, "geosite.dat")
-        if (geositeFile.exists() && geositeFile.lastModified() < updateDate) {
-            geositeFile.delete()
-        }
-        if (!geositeFile.exists()) {
-            FileOutputStream(geositeFile).use {
-                assets.open("geosite.dat").copyTo(it)
-            }
-        }
-
-        val asnFile = File(clashDir, "ASN.mmdb")
-        if (asnFile.exists() && asnFile.lastModified() < updateDate) {
-            asnFile.delete()
-        }
-        if (!asnFile.exists()) {
-            FileOutputStream(asnFile).use {
-                assets.open("ASN.mmdb").copyTo(it)
-            }
-        }
+        
+        extractAssetIfExists("geoip.metadb", File(clashDir, "geoip.metadb"))
+        extractAssetIfExists("geosite.dat", File(clashDir, "geosite.dat"))
+        extractAssetIfExists("ASN.mmdb", File(clashDir, "ASN.mmdb"))
     }
 
     fun finalize() {

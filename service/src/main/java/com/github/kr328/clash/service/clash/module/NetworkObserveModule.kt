@@ -43,11 +43,29 @@ class NetworkObserveModule(service: Service) : Module<Network?>(service) {
             Log.i("NetworkObserve onAvailable network=$network")
             networkInfos[network] = NetworkInfo()
             
-            networks.trySend(queryBestNetwork())
+            // Check if this network is actually validated and ready
+            val capabilities = connectivity.getNetworkCapabilities(network)
+            val isValidated = capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true
+            Log.i("NetworkObserve onAvailable isValidated=$isValidated")
+            
+            // Only send network change if validated, otherwise wait for onCapabilitiesChanged
+            if (isValidated) {
+                networks.trySend(queryBestNetwork())
+            }
+        }
+
+        override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {
+            val isValidated = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+            Log.i("NetworkObserve onCapabilitiesChanged network=$network validated=$isValidated")
+            
+            // Network just became validated, update underlying network
+            if (isValidated && networkInfos.containsKey(network)) {
+                networks.trySend(queryBestNetwork())
+            }
         }
 
         override fun onLosing(network: Network, maxMsToLive: Int) {
-            Log.i("NetworkObserve onLosing network=$network")
+            Log.i("NetworkObserve onLosing network=$network maxMsToLive=$maxMsToLive")
             networkInfos[network]?.losingMs = System.currentTimeMillis() + maxMsToLive
             notifyDnsChange()
 
@@ -63,7 +81,7 @@ class NetworkObserveModule(service: Service) : Module<Network?>(service) {
         }
 
         override fun onLinkPropertiesChanged(network: Network, linkProperties: LinkProperties) {
-            Log.i("NetworkObserve onLinkPropertiesChanged network=$network $linkProperties")
+            Log.i("NetworkObserve onLinkPropertiesChanged network=$network")
             networkInfos[network]?.dnsList = linkProperties.dnsServers
             notifyDnsChange()
 
@@ -101,9 +119,13 @@ class NetworkObserveModule(service: Service) : Module<Network?>(service) {
 
     private fun networkToInt(entry: Map.Entry<Network, NetworkInfo>): Int {
         val capabilities = connectivity.getNetworkCapabilities(entry.key)
-        // calculate priority based on transport type, available state
+        // calculate priority based on transport type, available state, and validation
         // lower value means higher priority
         // wifi > ethernet > usb tethering > bluetooth tethering > cellular > satellite > other
+        // Unvalidated networks get a heavy penalty to prefer validated ones
+        val isValidated = capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true
+        val validationPenalty = if (isValidated) 0 else 50
+        
         return when {
             capabilities == null -> 100
             capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN) -> 90
@@ -115,7 +137,7 @@ class NetworkObserveModule(service: Service) : Module<Network?>(service) {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM && capabilities.hasTransport(NetworkCapabilities.TRANSPORT_SATELLITE) -> 5
             // TRANSPORT_LOWPAN / TRANSPORT_THREAD / TRANSPORT_WIFI_AWARE are not for general internet access, which will not set as default route.
             else -> 20
-        } + (if (entry.value.isAvailable()) 0 else 10)
+        } + (if (entry.value.isAvailable()) 0 else 10) + validationPenalty
     }
 
     private fun queryBestNetwork(): Network? {

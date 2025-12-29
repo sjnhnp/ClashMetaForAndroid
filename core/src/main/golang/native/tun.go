@@ -7,6 +7,7 @@ import (
 	"context"
 	"io"
 	"sync"
+	"time"
 	"unsafe"
 
 	"golang.org/x/sync/semaphore"
@@ -49,7 +50,21 @@ func (t *remoteTun) querySocketUid(protocol int, source, target string) int {
 }
 
 func (t *remoteTun) close() {
-	_ = t.limit.Acquire(context.TODO(), 4)
+	// Use a timeout context to avoid blocking forever
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	
+	err := t.limit.Acquire(ctx, 4)
+	if err != nil {
+		// Timeout occurred, force close anyway
+		t.closed = true
+		if t.closer != nil {
+			_ = t.closer.Close()
+		}
+		app.ApplyTunContext(nil, nil)
+		C.release_object(t.callback)
+		return
+	}
 	defer t.limit.Release(4)
 
 	t.closed = true

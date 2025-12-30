@@ -44,14 +44,14 @@ class GistBackupActivity : BaseActivity<GistBackupDesign>() {
                     text = getString(R.string.backup_in_progress)
                 }
                 
-                val result = backupManager.createBackup { message ->
+                val result = backupManager.createBackup { message: String ->
                     launch(Dispatchers.Main) {
                         configure { text = message }
                     }
                 }
                 
                 when (result) {
-                    is GistBackupManager.Result.Success -> {
+                    is GistBackupManager.Result.Success<*> -> {
                         design.showSuccess(getString(R.string.backup_success))
                     }
                     is GistBackupManager.Result.Error -> {
@@ -74,8 +74,9 @@ class GistBackupActivity : BaseActivity<GistBackupDesign>() {
         }
         
         when (backupsResult) {
-            is GistBackupManager.Result.Success -> {
-                val backups = backupsResult.data
+            is GistBackupManager.Result.Success<*> -> {
+                @Suppress("UNCHECKED_CAST")
+                val backups = backupsResult.data as List<GistBackupManager.BackupInfo>
                 if (backups.isEmpty()) {
                     design.showError(getString(R.string.no_backups_found))
                     return
@@ -125,14 +126,14 @@ class GistBackupActivity : BaseActivity<GistBackupDesign>() {
                     text = getString(R.string.restore_in_progress)
                 }
                 
-                val result = backupManager.restoreBackup(gistId) { message ->
+                val result = backupManager.restoreBackup(gistId) { message: String ->
                     launch(Dispatchers.Main) {
                         configure { text = message }
                     }
                 }
                 
                 when (result) {
-                    is GistBackupManager.Result.Success -> {
+                    is GistBackupManager.Result.Success<*> -> {
                         AlertDialog.Builder(this@GistBackupActivity)
                             .setTitle(R.string.restore_success)
                             .setMessage(R.string.restart_app_message)
@@ -162,8 +163,9 @@ class GistBackupActivity : BaseActivity<GistBackupDesign>() {
         }
         
         when (backupsResult) {
-            is GistBackupManager.Result.Success -> {
-                val backups = backupsResult.data
+            is GistBackupManager.Result.Success<*> -> {
+                @Suppress("UNCHECKED_CAST")
+                val backups = backupsResult.data as List<GistBackupManager.BackupInfo>
                 if (backups.isEmpty()) {
                     design.showError(getString(R.string.no_backups_found))
                     return
@@ -175,11 +177,11 @@ class GistBackupActivity : BaseActivity<GistBackupDesign>() {
                 withContext(Dispatchers.Main) {
                     AlertDialog.Builder(this@GistBackupActivity)
                         .setTitle(R.string.select_backups_to_delete)
-                        .setMultiChoiceItems(items, selected) { _, which, isChecked ->
+                        .setMultiChoiceItems(items, selected) { _, which: Int, isChecked: Boolean ->
                             selected[which] = isChecked
                         }
                         .setPositiveButton(R.string.delete) { _, _ ->
-                            val toDelete = backups.filterIndexed { index, _ -> selected[index] }
+                            val toDelete = backups.filterIndexed { index: Int, _: GistBackupManager.BackupInfo -> selected[index] }
                             if (toDelete.isNotEmpty()) {
                                 launch {
                                     deleteBackups(design, toDelete)
@@ -211,14 +213,14 @@ class GistBackupActivity : BaseActivity<GistBackupDesign>() {
                 var successCount = 0
                 var failCount = 0
                 
-                backups.forEachIndexed { index, backup ->
+                backups.forEachIndexed { index: Int, backup: GistBackupManager.BackupInfo ->
                     configure { 
                         progress = index
                         text = backup.description 
                     }
                     
                     when (backupManager.deleteBackup(backup.id)) {
-                        is GistBackupManager.Result.Success -> successCount++
+                        is GistBackupManager.Result.Success<*> -> successCount++
                         is GistBackupManager.Result.Error -> failCount++
                     }
                 }

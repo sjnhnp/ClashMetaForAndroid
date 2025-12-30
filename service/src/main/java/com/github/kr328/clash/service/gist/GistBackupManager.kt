@@ -171,13 +171,16 @@ class GistBackupManager(private val context: Context) {
      * Collect all data for backup.
      */
     private suspend fun collectBackupData(): GistBackupData = withContext(Dispatchers.IO) {
-        val servicePrefs = PreferenceProvider.createSharedPreferencesFromContext(context)
+        // Use direct file access for service prefs to avoid MultiProcessPreference issues with getAll()
+        val servicePrefs = context.getSharedPreferences("service", Context.MODE_PRIVATE)
         val uiPrefs = context.getSharedPreferences("ui", Context.MODE_PRIVATE)
         
         // Collect settings
         val serviceSettings = prefsToMap(servicePrefs)
         val uiSettings = prefsToMap(uiPrefs)
         
+        android.util.Log.d("GistBackup", "Collected ${serviceSettings.size} service settings")
+
         // Collect profiles
         val importedDao = ImportedDao()
         val selectionDao = SelectionDao()
@@ -252,7 +255,7 @@ class GistBackupManager(private val context: Context) {
     ) = withContext(Dispatchers.IO) {
         // Restore service settings
         onProgress("Restoring service settings...")
-        val servicePrefs = PreferenceProvider.createSharedPreferencesFromContext(context)
+        val servicePrefs = context.getSharedPreferences("service", Context.MODE_PRIVATE)
         mapToPrefs(data.serviceSettings, servicePrefs)
         
         // Restore UI settings

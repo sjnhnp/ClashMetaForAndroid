@@ -40,13 +40,13 @@ class GistBackupActivity : BaseActivity<GistBackupDesign>() {
         withContext(Dispatchers.Main) {
             withModelProgressBar {
                 configure {
-                    setTitle(R.string.backup_in_progress)
-                    setCancelable(false)
+                    isIndeterminate = true
+                    text = getString(R.string.backup_in_progress)
                 }
                 
                 val result = backupManager.createBackup { message ->
                     launch(Dispatchers.Main) {
-                        configure { setMessage(message) }
+                        configure { text = message }
                     }
                 }
                 
@@ -66,8 +66,8 @@ class GistBackupActivity : BaseActivity<GistBackupDesign>() {
         val backupsResult = withContext(Dispatchers.Main) {
             withModelProgressBar {
                 configure {
-                    setTitle(R.string.loading_backups)
-                    setCancelable(false)
+                    isIndeterminate = true
+                    text = getString(R.string.loading_backups)
                 }
                 backupManager.listBackups()
             }
@@ -109,36 +109,7 @@ class GistBackupActivity : BaseActivity<GistBackupDesign>() {
                 .setMessage(R.string.restore_warning_message)
                 .setPositiveButton(R.string.restore) { _, _ ->
                     launch {
-                        withContext(Dispatchers.Main) {
-                            withModelProgressBar {
-                                configure {
-                                    setTitle(R.string.restore_in_progress)
-                                    setCancelable(false)
-                                }
-                                
-                                val result = backupManager.restoreBackup(gistId) { message ->
-                                    launch(Dispatchers.Main) {
-                                        configure { setMessage(message) }
-                                    }
-                                }
-                                
-                                when (result) {
-                                    is GistBackupManager.Result.Success -> {
-                                        AlertDialog.Builder(this@GistBackupActivity)
-                                            .setTitle(R.string.restore_success)
-                                            .setMessage(R.string.restart_app_message)
-                                            .setPositiveButton(R.string.ok) { _, _ ->
-                                                finishAffinity()
-                                            }
-                                            .setCancelable(false)
-                                            .show()
-                                    }
-                                    is GistBackupManager.Result.Error -> {
-                                        design.showError(result.message)
-                                    }
-                                }
-                            }
-                        }
+                        doRestore(design, gistId)
                     }
                 }
                 .setNegativeButton(R.string.cancel, null)
@@ -146,12 +117,45 @@ class GistBackupActivity : BaseActivity<GistBackupDesign>() {
         }
     }
     
+    private suspend fun doRestore(design: GistBackupDesign, gistId: String) {
+        withContext(Dispatchers.Main) {
+            withModelProgressBar {
+                configure {
+                    isIndeterminate = true
+                    text = getString(R.string.restore_in_progress)
+                }
+                
+                val result = backupManager.restoreBackup(gistId) { message ->
+                    launch(Dispatchers.Main) {
+                        configure { text = message }
+                    }
+                }
+                
+                when (result) {
+                    is GistBackupManager.Result.Success -> {
+                        AlertDialog.Builder(this@GistBackupActivity)
+                            .setTitle(R.string.restore_success)
+                            .setMessage(R.string.restart_app_message)
+                            .setPositiveButton(R.string.ok) { _, _ ->
+                                finishAffinity()
+                            }
+                            .setCancelable(false)
+                            .show()
+                    }
+                    is GistBackupManager.Result.Error -> {
+                        design.showError(result.message)
+                    }
+                }
+            }
+        }
+    }
+    
     private suspend fun showManageBackupsDialog(design: GistBackupDesign) {
         val backupsResult = withContext(Dispatchers.Main) {
             withModelProgressBar {
                 configure {
-                    setTitle(R.string.loading_backups)
-                    setCancelable(false)
+                    isIndeterminate = true
+                    text = getString(R.string.loading_backups)
                 }
                 backupManager.listBackups()
             }
@@ -199,15 +203,19 @@ class GistBackupActivity : BaseActivity<GistBackupDesign>() {
         withContext(Dispatchers.Main) {
             withModelProgressBar {
                 configure {
-                    setTitle(R.string.deleting_backups)
-                    setCancelable(false)
+                    isIndeterminate = false
+                    max = backups.size
+                    text = getString(R.string.deleting_backups)
                 }
                 
                 var successCount = 0
                 var failCount = 0
                 
-                for (backup in backups) {
-                    configure { setMessage(backup.description) }
+                backups.forEachIndexed { index, backup ->
+                    configure { 
+                        progress = index
+                        text = backup.description 
+                    }
                     
                     when (backupManager.deleteBackup(backup.id)) {
                         is GistBackupManager.Result.Success -> successCount++

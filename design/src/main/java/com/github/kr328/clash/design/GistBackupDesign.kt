@@ -93,7 +93,7 @@ class GistBackupDesign(
             ) {
                 clicked {
                     if (!gistStore.isConfigured) {
-                        showToast(R.string.please_configure_credentials, ToastDuration.Long)
+                        launch { showToast(R.string.please_configure_credentials, ToastDuration.Long) }
                         return@clicked
                     }
                     requests.trySend(Request.Backup)
@@ -107,7 +107,7 @@ class GistBackupDesign(
             ) {
                 clicked {
                     if (!gistStore.isConfigured) {
-                        showToast(R.string.please_configure_credentials, ToastDuration.Long)
+                        launch { showToast(R.string.please_configure_credentials, ToastDuration.Long) }
                         return@clicked
                     }
                     requests.trySend(Request.Restore)
@@ -121,7 +121,7 @@ class GistBackupDesign(
             ) {
                 clicked {
                     if (gistStore.githubToken == null) {
-                        showToast(R.string.please_configure_token, ToastDuration.Long)
+                        launch { showToast(R.string.please_configure_token, ToastDuration.Long) }
                         return@clicked
                     }
                     requests.trySend(Request.ManageBackups)

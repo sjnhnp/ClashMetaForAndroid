@@ -352,4 +352,40 @@
     <string name="github_mirror">GitHub Acceleration</string>
     <string name="github_mirror_summary">Prefix for GitHub URLs (e.g., https://ghfast.top)</string>
     <string name="github_mirror_empty">Not configured</string>
+
+    <!-- Gist Backup -->
+    <string name="gist_backup">Gist Backup</string>
+    <string name="gist_credentials">Credentials</string>
+    <string name="github_token">GitHub Token</string>
+    <string name="github_token_hint">Personal Access Token with gist scope</string>
+    <string name="encryption_secret">Encryption Secret</string>
+    <string name="encryption_secret_hint">Password for encrypting backup data</string>
+    <string name="configured">Configured</string>
+    <string name="not_configured">Not configured</string>
+    <string name="gist_credentials_tips"><![CDATA[GitHub Token requires <strong>gist</strong> scope permission. Create one at GitHub Settings → Developer settings → Personal access tokens]]></string>
+    <string name="backup_operations">Backup Operations</string>
+    <string name="backup_now">Backup Now</string>
+    <string name="backup_now_summary">Upload current settings and profiles to Gist</string>
+    <string name="restore_from_gist">Restore from Gist</string>
+    <string name="restore_from_gist_summary">Download and restore from a previous backup</string>
+    <string name="manage_backups">Manage Backups</string>
+    <string name="manage_backups_summary">View and delete old backups</string>
+    <string name="gist_backup_tips"><![CDATA[Backups are encrypted with AES-256 and stored as <strong>private</strong> Gists. Keep your encryption secret safe - it cannot be recovered!]]></string>
+    <string name="please_configure_credentials">Please configure GitHub Token and Encryption Secret first</string>
+    <string name="please_configure_token">Please configure GitHub Token first</string>
+    <string name="backup_in_progress">Backup in progress</string>
+    <string name="backup_success">Backup completed successfully</string>
+    <string name="loading_backups">Loading backups…</string>
+    <string name="no_backups_found">No backups found</string>
+    <string name="select_backup_to_restore">Select backup to restore</string>
+    <string name="restore_warning_title">Restore Warning</string>
+    <string name="restore_warning_message">This will overwrite current settings and profiles. Continue?</string>
+    <string name="restore">Restore</string>
+    <string name="restore_in_progress">Restore in progress</string>
+    <string name="restore_success">Restore Completed</string>
+    <string name="restart_app_message">Please restart the app to apply changes.</string>
+    <string name="select_backups_to_delete">Select backups to delete</string>
+    <string name="deleting_backups">Deleting backups…</string>
+    <string name="deleted_n_backups">Deleted %d backup(s)</string>
+    <string name="deleted_with_errors">Deleted %1$d backup(s), %2$d failed</string>
 </resources>

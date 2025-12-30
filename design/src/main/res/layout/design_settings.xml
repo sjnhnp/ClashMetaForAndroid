@@ -42,6 +42,13 @@
                     app:icon="@drawable/ic_baseline_dns"
                     app:text="@string/network" />
 
+                <com.github.kr328.clash.design.view.ActionLabel
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:onClick="@{() -> self.request(Request.StartGistBackup)}"
+                    app:icon="@drawable/ic_baseline_sync"
+                    app:text="@string/gist_backup" />
+
                 <!-- 已精简：移除配置覆写和Meta特性设置入口 -->
 
             </LinearLayout>

@@ -252,7 +252,7 @@ class GistBackupManager(private val context: Context) {
      */
     private suspend fun restoreBackupData(
         data: GistBackupData,
-        onProgress: (String) -\u003e Unit
+        onProgress: (String) -> Unit
     ) = withContext(Dispatchers.IO) {
         android.util.Log.i("GistBackup", "Starting restore with ${data.serviceSettings.size} service settings, ${data.uiSettings.size} UI settings")
         

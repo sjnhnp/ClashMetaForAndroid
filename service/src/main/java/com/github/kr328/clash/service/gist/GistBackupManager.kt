@@ -255,7 +255,8 @@ class GistBackupManager(private val context: Context) {
     ) = withContext(Dispatchers.IO) {
         // Restore service settings
         onProgress("Restoring service settings...")
-        val servicePrefs = context.getSharedPreferences("service", Context.MODE_PRIVATE)
+        // Use PreferenceProvider to ensure changes are propagated to the background process
+        val servicePrefs = PreferenceProvider.createSharedPreferencesFromContext(context)
         mapToPrefs(data.serviceSettings, servicePrefs)
         
         // Restore UI settings

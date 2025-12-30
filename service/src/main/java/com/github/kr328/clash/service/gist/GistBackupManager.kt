@@ -171,15 +171,16 @@ class GistBackupManager(private val context: Context) {
      * Collect all data for backup.
      */
     private suspend fun collectBackupData(): GistBackupData = withContext(Dispatchers.IO) {
-        // Use direct file access for service prefs to avoid MultiProcessPreference issues with getAll()
-        val servicePrefs = context.getSharedPreferences("service", Context.MODE_PRIVATE)
+        // Use PreferenceProvider to read service settings through MultiProcessPreference
+        // Since MultiProcessPreference doesn't support getAll(), we need to enumerate known keys
+        val servicePrefs = PreferenceProvider.createSharedPreferencesFromContext(context)
         val uiPrefs = context.getSharedPreferences("ui", Context.MODE_PRIVATE)
         
-        // Collect settings
-        val serviceSettings = prefsToMap(servicePrefs)
+        // Collect settings - use explicit key enumeration for service settings
+        val serviceSettings = collectServiceSettings(servicePrefs)
         val uiSettings = prefsToMap(uiPrefs)
         
-        android.util.Log.d("GistBackup", "Collected ${serviceSettings.size} service settings")
+        android.util.Log.d("GistBackup", "Collected ${serviceSettings.size} service settings: ${serviceSettings.keys}")
 
         // Collect profiles
         val importedDao = ImportedDao()
@@ -336,6 +337,67 @@ class GistBackupManager(private val context: Context) {
                 selectionDao.setSelected(Selection(uuid, proxy, selected))
             }
         }
+    }
+    
+    /**
+     * Collect ServiceStore settings by explicitly reading each known key.
+     * This is necessary because MultiProcessPreference doesn't support getAll().
+     */
+    private fun collectServiceSettings(prefs: SharedPreferences): Map<String, String> {
+        val map = mutableMapOf<String, String>()
+        
+        // Define all known ServiceStore keys with their types
+        // Format: key name -> type prefix (s=String, b=Boolean, i=Int, ss=StringSet)
+        val knownKeys = mapOf(
+            "active_profile" to "s",           // UUID as string
+            "bypass_private_network" to "b",   // Network settings
+            "access_control_mode" to "s",      // Enum stored as string
+            "access_control_packages" to "ss", // StringSet
+            "dns_hijacking" to "b",            // Network settings
+            "system_proxy" to "b",             // Network settings
+            "allow_bypass" to "b",             // Network settings
+            "allow_ipv6" to "b",               // Network settings
+            "tun_stack_mode" to "s",           // String (system/gvisor/mixed)
+            "dynamic_notification" to "b",     // App settings
+            "github_mirror" to "s"             // String (URL or empty)
+        )
+        
+        for ((key, type) in knownKeys) {
+            try {
+                when (type) {
+                    "s" -> {
+                        val value = prefs.getString(key, null)
+                        if (value != null) {
+                            map["s:$key"] = value
+                        }
+                    }
+                    "b" -> {
+                        // Check if the key exists by trying to get it with a sentinel default
+                        // We need to handle the case where the key doesn't exist
+                        if (prefs.contains(key)) {
+                            val value = prefs.getBoolean(key, false)
+                            map["b:$key"] = value.toString()
+                        }
+                    }
+                    "i" -> {
+                        if (prefs.contains(key)) {
+                            val value = prefs.getInt(key, 0)
+                            map["i:$key"] = value.toString()
+                        }
+                    }
+                    "ss" -> {
+                        val value = prefs.getStringSet(key, null)
+                        if (value != null) {
+                            map["ss:$key"] = value.joinToString("\u0000")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("GistBackup", "Failed to read service setting: $key", e)
+            }
+        }
+        
+        return map
     }
     
     /**

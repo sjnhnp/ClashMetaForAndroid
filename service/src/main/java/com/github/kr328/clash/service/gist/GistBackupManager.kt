@@ -252,17 +252,24 @@ class GistBackupManager(private val context: Context) {
      */
     private suspend fun restoreBackupData(
         data: GistBackupData,
-        onProgress: (String) -> Unit
+        onProgress: (String) -\u003e Unit
     ) = withContext(Dispatchers.IO) {
+        android.util.Log.i("GistBackup", "Starting restore with ${data.serviceSettings.size} service settings, ${data.uiSettings.size} UI settings")
+        
         // Restore service settings
         onProgress("Restoring service settings...")
         // Use PreferenceProvider to ensure changes are propagated to the background process
         val servicePrefs = PreferenceProvider.createSharedPreferencesFromContext(context)
+        android.util.Log.d("GistBackup", "Service prefs type: ${servicePrefs.javaClass.simpleName}")
         mapToPrefs(data.serviceSettings, servicePrefs)
+        
+        // Verify service settings were written correctly
+        verifyRestoredSettings(data.serviceSettings, servicePrefs, "Service")
         
         // Restore UI settings
         onProgress("Restoring UI settings...")
         val uiPrefs = context.getSharedPreferences("ui", Context.MODE_PRIVATE)
+        android.util.Log.d("GistBackup", "UI prefs type: ${uiPrefs.javaClass.simpleName}")
         mapToPrefs(data.uiSettings, uiPrefs)
         
         // Restore profiles
@@ -342,53 +349,64 @@ class GistBackupManager(private val context: Context) {
     /**
      * Collect ServiceStore settings by explicitly reading each known key.
      * This is necessary because MultiProcessPreference doesn't support getAll().
+     * 
+     * IMPORTANT: We don't use prefs.contains() because it may return false for keys
+     * that have never been explicitly written (even if they have default values).
+     * Instead, we always read and backup all known keys with their default values.
+     * This ensures that the backup captures the complete state.
      */
     private fun collectServiceSettings(prefs: SharedPreferences): Map<String, String> {
         val map = mutableMapOf<String, String>()
         
-        // Define all known ServiceStore keys with their types
-        // Format: key name -> type prefix (s=String, b=Boolean, i=Int, ss=StringSet)
-        val knownKeys = mapOf(
-            "active_profile" to "s",           // UUID as string
-            "bypass_private_network" to "b",   // Network settings
-            "access_control_mode" to "s",      // Enum stored as string
-            "access_control_packages" to "ss", // StringSet
-            "dns_hijacking" to "b",            // Network settings
-            "system_proxy" to "b",             // Network settings
-            "allow_bypass" to "b",             // Network settings
-            "allow_ipv6" to "b",               // Network settings
-            "tun_stack_mode" to "s",           // String (system/gvisor/mixed)
-            "dynamic_notification" to "b",     // App settings
-            "github_mirror" to "s"             // String (URL or empty)
+        // Define all known ServiceStore keys with their types and default values
+        // Format: key name -> Pair(type prefix, default value)
+        // Types: s=String, b=Boolean, i=Int, ss=StringSet
+        val knownKeysWithDefaults = mapOf(
+            "active_profile" to Pair("s", ""),                    // UUID as string, empty = no selection
+            "bypass_private_network" to Pair("b", "true"),        // Network settings, default true
+            "access_control_mode" to Pair("s", "AcceptAll"),      // Enum stored as string
+            "access_control_packages" to Pair("ss", ""),          // StringSet, empty by default
+            "dns_hijacking" to Pair("b", "true"),                 // Network settings, default true
+            "system_proxy" to Pair("b", "true"),                  // Network settings, default true
+            "allow_bypass" to Pair("b", "true"),                  // Network settings, default true
+            "allow_ipv6" to Pair("b", "false"),                   // Network settings, default false
+            "tun_stack_mode" to Pair("s", "system"),              // String (system/gvisor/mixed)
+            "dynamic_notification" to Pair("b", "true"),          // App settings, default true
+            "github_mirror" to Pair("s", "")                      // String (URL or empty)
         )
         
-        for ((key, type) in knownKeys) {
+        for ((key, typeAndDefault) in knownKeysWithDefaults) {
+            val (type, default) = typeAndDefault
             try {
                 when (type) {
                     "s" -> {
-                        val value = prefs.getString(key, null)
+                        // For strings, use empty string as sentinel to detect "no value"
+                        val value = prefs.getString(key, default)
+                        // Always save the value (including defaults) to ensure complete backup
                         if (value != null) {
                             map["s:$key"] = value
+                            android.util.Log.d("GistBackup", "Collected string $key = $value")
                         }
                     }
                     "b" -> {
-                        // Check if the key exists by trying to get it with a sentinel default
-                        // We need to handle the case where the key doesn't exist
-                        if (prefs.contains(key)) {
-                            val value = prefs.getBoolean(key, false)
-                            map["b:$key"] = value.toString()
-                        }
+                        // Always read boolean values - they always have a state
+                        val defaultBool = default.toBoolean()
+                        val value = prefs.getBoolean(key, defaultBool)
+                        map["b:$key"] = value.toString()
+                        android.util.Log.d("GistBackup", "Collected boolean $key = $value")
                     }
                     "i" -> {
-                        if (prefs.contains(key)) {
-                            val value = prefs.getInt(key, 0)
-                            map["i:$key"] = value.toString()
-                        }
+                        val defaultInt = default.toIntOrNull() ?: 0
+                        val value = prefs.getInt(key, defaultInt)
+                        map["i:$key"] = value.toString()
+                        android.util.Log.d("GistBackup", "Collected int $key = $value")
                     }
                     "ss" -> {
-                        val value = prefs.getStringSet(key, null)
+                        // For StringSet, null means not set, empty set means explicitly empty
+                        val value = prefs.getStringSet(key, emptySet())
                         if (value != null) {
                             map["ss:$key"] = value.joinToString("\u0000")
+                            android.util.Log.d("GistBackup", "Collected stringSet $key = ${value.size} items")
                         }
                     }
                 }
@@ -397,6 +415,7 @@ class GistBackupManager(private val context: Context) {
             }
         }
         
+        android.util.Log.i("GistBackup", "Total collected service settings: ${map.size}")
         return map
     }
     
@@ -424,22 +443,84 @@ class GistBackupManager(private val context: Context) {
     
     /**
      * Restore Map to SharedPreferences.
+     * Uses commit() instead of apply() to ensure synchronous write.
      */
     private fun mapToPrefs(map: Map<String, String>, prefs: SharedPreferences) {
+        android.util.Log.i("GistBackup", "Restoring ${map.size} settings to preferences")
+        
         val editor = prefs.edit()
         map.forEach { (key, value) ->
             val type = key.substringBefore(":")
             val actualKey = key.substringAfter(":")
             when (type) {
-                "s" -> editor.putString(actualKey, value)
-                "i" -> editor.putInt(actualKey, value.toIntOrNull() ?: 0)
-                "l" -> editor.putLong(actualKey, value.toLongOrNull() ?: 0L)
-                "b" -> editor.putBoolean(actualKey, value.toBooleanStrictOrNull() ?: false)
-                "f" -> editor.putFloat(actualKey, value.toFloatOrNull() ?: 0f)
-                "ss" -> editor.putStringSet(actualKey, value.split("\u0000").toSet())
+                "s" -> {
+                    editor.putString(actualKey, value)
+                    android.util.Log.d("GistBackup", "Restoring string $actualKey = $value")
+                }
+                "i" -> {
+                    editor.putInt(actualKey, value.toIntOrNull() ?: 0)
+                    android.util.Log.d("GistBackup", "Restoring int $actualKey = $value")
+                }
+                "l" -> {
+                    editor.putLong(actualKey, value.toLongOrNull() ?: 0L)
+                    android.util.Log.d("GistBackup", "Restoring long $actualKey = $value")
+                }
+                "b" -> {
+                    editor.putBoolean(actualKey, value.toBooleanStrictOrNull() ?: false)
+                    android.util.Log.d("GistBackup", "Restoring boolean $actualKey = $value")
+                }
+                "f" -> {
+                    editor.putFloat(actualKey, value.toFloatOrNull() ?: 0f)
+                    android.util.Log.d("GistBackup", "Restoring float $actualKey = $value")
+                }
+                "ss" -> {
+                    val stringSet = if (value.isEmpty()) emptySet() else value.split("\u0000").toSet()
+                    editor.putStringSet(actualKey, stringSet)
+                    android.util.Log.d("GistBackup", "Restoring stringSet $actualKey = ${stringSet.size} items")
+                }
             }
         }
-        editor.apply()
+        
+        // Use commit() for synchronous write to ensure data is persisted
+        val success = editor.commit()
+        android.util.Log.i("GistBackup", "Preferences write completed, success = $success")
+    }
+    
+    /**
+     * Verify that settings were correctly restored by reading them back.
+     * This helps diagnose issues where writes appear to succeed but values aren't persisted.
+     */
+    private fun verifyRestoredSettings(
+        expected: Map<String, String>,
+        prefs: SharedPreferences,
+        label: String
+    ) {
+        var matchCount = 0
+        var mismatchCount = 0
+        
+        for ((key, expectedValue) in expected) {
+            val type = key.substringBefore(":")
+            val actualKey = key.substringAfter(":")
+            
+            val actualValue = when (type) {
+                "s" -> prefs.getString(actualKey, null)
+                "b" -> prefs.getBoolean(actualKey, false).toString()
+                "i" -> prefs.getInt(actualKey, 0).toString()
+                "l" -> prefs.getLong(actualKey, 0).toString()
+                "f" -> prefs.getFloat(actualKey, 0f).toString()
+                "ss" -> prefs.getStringSet(actualKey, emptySet())?.joinToString("\u0000")
+                else -> null
+            }
+            
+            if (actualValue == expectedValue) {
+                matchCount++
+            } else {
+                mismatchCount++
+                android.util.Log.w("GistBackup", "$label verify MISMATCH: $actualKey expected='$expectedValue' actual='$actualValue'")
+            }
+        }
+        
+        android.util.Log.i("GistBackup", "$label settings verification: $matchCount matched, $mismatchCount mismatched out of ${expected.size}")
     }
     
     companion object {

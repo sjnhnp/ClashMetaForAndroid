@@ -19,6 +19,7 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.kaidl.runtime)
     implementation(libs.rikkax.multiprocess)
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation(platform("com.squareup.okhttp3:okhttp-bom:4.12.0"))
 
     // define any required OkHttp artifacts without version

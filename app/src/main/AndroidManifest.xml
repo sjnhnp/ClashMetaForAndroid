@@ -152,6 +152,11 @@
             android:configChanges="uiMode"
             android:exported="false"
             android:label="@string/app" />
+        <activity
+            android:name=".GistBackupActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="@string/gist_backup" />
         <!-- 已移除: OverrideSettingsActivity -->
         <!-- 已移除: MetaFeatureSettingsActivity -->
         <activity

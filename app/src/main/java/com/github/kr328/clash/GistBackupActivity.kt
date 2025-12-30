@@ -12,6 +12,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 class GistBackupActivity : BaseActivity<GistBackupDesign>() {
     
@@ -21,8 +23,9 @@ class GistBackupActivity : BaseActivity<GistBackupDesign>() {
     override suspend fun main() {
         val design = GistBackupDesign(this, gistStore)
         
-        setContentDesign(design)
-        
+
+setContentDesign(design)
+
         while (isActive) {
             select<Unit> {
                 events.onReceive { }
@@ -38,6 +41,7 @@ class GistBackupActivity : BaseActivity<GistBackupDesign>() {
     }
     
     private suspend fun performBackup(design: GistBackupDesign) {
+
         var result: GistBackupManager.Result<String>? = null
         
         withContext(Dispatchers.Main) {
@@ -90,43 +94,53 @@ class GistBackupActivity : BaseActivity<GistBackupDesign>() {
         
         Log.d("GistBackup", "listBackups result: $backupsResult")
         
-        withContext(Dispatchers.Main) {
-            val finalResult = backupsResult
-            if (finalResult == null) {
-                design.showError(getString(R.string.unknown_error))
-                return@withContext
-            }
+        val finalResult = backupsResult
+        if (finalResult == null) {
+            design.showError(getString(R.string.unknown_error))
+            return
+        }
 
-            when (finalResult) {
-                is GistBackupManager.Result.Success<*> -> {
-                    @Suppress("UNCHECKED_CAST")
-                    val backups = finalResult.data as? List<GistBackupManager.BackupInfo> ?: emptyList()
-                    Log.d("GistBackup", "Found ${backups.size} backups")
-                    
-                    if (backups.isEmpty()) {
+        when (finalResult) {
+            is GistBackupManager.Result.Success<*> -> {
+                @Suppress("UNCHECKED_CAST")
+                val backups = finalResult.data as? List<GistBackupManager.BackupInfo> ?: emptyList()
+                Log.d("GistBackup", "Found ${backups.size} backups")
+                
+                if (backups.isEmpty()) {
+                    withContext(Dispatchers.Main) {
                         AlertDialog.Builder(this@GistBackupActivity)
                             .setTitle(R.string.gist_backup)
                             .setMessage(R.string.no_backups_found)
                             .setPositiveButton(R.string.ok, null)
                             .show()
-                        return@withContext
                     }
-                    
-                    val items = backups.map { it.description }.toTypedArray()
-                    
-                    AlertDialog.Builder(this@GistBackupActivity)
-                        .setTitle(R.string.select_backup_to_restore)
-                        .setItems(items) { _, which ->
-                            val selectedBackup = backups[which]
-                            launch {
-                                performRestore(design, selectedBackup.id)
-                            }
-                        }
-                        .setNegativeButton(R.string.cancel, null)
-                        .show()
+                    return
                 }
-                is GistBackupManager.Result.Error -> {
-                    Log.e("GistBackup", "Error: ${finalResult.message}")
+                
+                val items = backups.map { it.description }.toTypedArray()
+                
+                val selectedBackup = withContext(Dispatchers.Main) {
+                    suspendCancellableCoroutine<GistBackupManager.BackupInfo?> { cont ->
+                         val dialog = AlertDialog.Builder(this@GistBackupActivity)
+                            .setTitle(R.string.select_backup_to_restore)
+                            .setItems(items) { _, which ->
+                                cont.resume(backups[which])
+                            }
+                            .setNegativeButton(R.string.cancel) { _, _ -> cont.resume(null) }
+                            .setOnCancelListener { cont.resume(null) }
+                            .show()
+                         
+                         cont.invokeOnCancellation { dialog.dismiss() }
+                    }
+                }
+                
+                if (selectedBackup != null) {
+                    performRestore(design, selectedBackup.id)
+                }
+            }
+            is GistBackupManager.Result.Error -> {
+                Log.e("GistBackup", "Error: ${finalResult.message}")
+                withContext(Dispatchers.Main) {
                     AlertDialog.Builder(this@GistBackupActivity)
                         .setTitle(R.string.error)
                         .setMessage(finalResult.message)
@@ -138,17 +152,21 @@ class GistBackupActivity : BaseActivity<GistBackupDesign>() {
     }
     
     private suspend fun performRestore(design: GistBackupDesign, gistId: String) {
-        withContext(Dispatchers.Main) {
-            AlertDialog.Builder(this@GistBackupActivity)
-                .setTitle(R.string.restore_warning_title)
-                .setMessage(R.string.restore_warning_message)
-                .setPositiveButton(R.string.restore) { _, _ ->
-                    launch {
-                        doRestore(design, gistId)
-                    }
-                }
-                .setNegativeButton(R.string.cancel, null)
-                .show()
+        val confirmed = withContext(Dispatchers.Main) {
+            suspendCancellableCoroutine<Boolean> { cont ->
+                val dialog = AlertDialog.Builder(this@GistBackupActivity)
+                    .setTitle(R.string.restore_warning_title)
+                    .setMessage(R.string.restore_warning_message)
+                    .setPositiveButton(R.string.restore) { _, _ -> cont.resume(true) }
+                    .setNegativeButton(R.string.cancel) { _, _ -> cont.resume(false) }
+                    .setOnCancelListener { cont.resume(false) }
+                    .show()
+                cont.invokeOnCancellation { dialog.dismiss() }
+            }
+        }
+        
+        if (confirmed) {
+            doRestore(design, gistId)
         }
     }
     
@@ -216,49 +234,58 @@ class GistBackupActivity : BaseActivity<GistBackupDesign>() {
         
         Log.d("GistBackup", "listBackups result: $backupsResult")
         
-        withContext(Dispatchers.Main) {
-            val finalResult = backupsResult
-            if (finalResult == null) {
-                design.showError(getString(R.string.unknown_error))
-                return@withContext
-            }
+        val finalResult = backupsResult
+        if (finalResult == null) {
+            design.showError(getString(R.string.unknown_error))
+            return
+        }
 
-            when (finalResult) {
-                is GistBackupManager.Result.Success<*> -> {
-                    @Suppress("UNCHECKED_CAST")
-                    val backups = finalResult.data as? List<GistBackupManager.BackupInfo> ?: emptyList()
-                    Log.d("GistBackup", "Found ${backups.size} backups for management")
-                    
-                    if (backups.isEmpty()) {
+        when (finalResult) {
+            is GistBackupManager.Result.Success<*> -> {
+                @Suppress("UNCHECKED_CAST")
+                val backups = finalResult.data as? List<GistBackupManager.BackupInfo> ?: emptyList()
+                Log.d("GistBackup", "Found ${backups.size} backups for management")
+                
+                if (backups.isEmpty()) {
+                    withContext(Dispatchers.Main) {
                         AlertDialog.Builder(this@GistBackupActivity)
                             .setTitle(R.string.gist_backup)
                             .setMessage(R.string.no_backups_found)
                             .setPositiveButton(R.string.ok, null)
                             .show()
-                        return@withContext
                     }
-                    
-                    val items = backups.map { it.description }.toTypedArray()
-                    val selected = BooleanArray(items.size)
-                    
-                    AlertDialog.Builder(this@GistBackupActivity)
-                        .setTitle(R.string.select_backups_to_delete)
-                        .setMultiChoiceItems(items, selected) { _, which: Int, isChecked: Boolean ->
-                            selected[which] = isChecked
-                        }
-                        .setPositiveButton(R.string.delete) { _, _ ->
-                            val toDelete = backups.filterIndexed { index: Int, _: GistBackupManager.BackupInfo -> selected[index] }
-                            if (toDelete.isNotEmpty()) {
-                                launch {
-                                    deleteBackups(design, toDelete)
-                                }
-                            }
-                        }
-                        .setNegativeButton(R.string.cancel, null)
-                        .show()
+                    return
                 }
-                is GistBackupManager.Result.Error -> {
-                    Log.e("GistBackup", "Error: ${finalResult.message}")
+                
+                val items = backups.map { it.description }.toTypedArray()
+                val selected = BooleanArray(items.size)
+                
+                val toDelete = withContext(Dispatchers.Main) {
+                    suspendCancellableCoroutine<List<GistBackupManager.BackupInfo>?> { cont ->
+                        val dialog = AlertDialog.Builder(this@GistBackupActivity)
+                            .setTitle(R.string.select_backups_to_delete)
+                            .setMultiChoiceItems(items, selected) { _, which, isChecked ->
+                                selected[which] = isChecked
+                            }
+                            .setPositiveButton(R.string.delete) { _, _ ->
+                                val list = backups.filterIndexed { index: Int, _: GistBackupManager.BackupInfo -> selected[index] }
+                                cont.resume(list)
+                            }
+                            .setNegativeButton(R.string.cancel) { _, _ -> cont.resume(null) }
+                            .setOnCancelListener { cont.resume(null) }
+                            .show()
+                        
+                        cont.invokeOnCancellation { dialog.dismiss() }
+                    }
+                }
+                
+                if (!toDelete.isNullOrEmpty()) {
+                    deleteBackups(design, toDelete)
+                }
+            }
+            is GistBackupManager.Result.Error -> {
+                Log.e("GistBackup", "Error: ${finalResult.message}")
+                withContext(Dispatchers.Main) {
                     AlertDialog.Builder(this@GistBackupActivity)
                         .setTitle(R.string.error)
                         .setMessage(finalResult.message)

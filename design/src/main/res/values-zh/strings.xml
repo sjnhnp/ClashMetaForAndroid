@@ -265,6 +265,8 @@
     <string name="github_mirror_summary">GitHub 地址前缀（如 https://ghfast.top）</string>
     <string name="github_mirror_empty">未配置</string>
 
+    <string name="unknown_error">未知错误</string>
+
     <!-- Gist 备份 -->
     <string name="gist_backup">Gist 备份</string>
     <string name="gist_credentials">凭据配置</string>

@@ -353,6 +353,8 @@
     <string name="github_mirror_summary">Prefix for GitHub URLs (e.g., https://ghfast.top)</string>
     <string name="github_mirror_empty">Not configured</string>
 
+    <string name="unknown_error">Unknown error</string>
+
     <!-- Gist Backup -->
     <string name="gist_backup">Gist Backup</string>
     <string name="gist_credentials">Credentials</string>

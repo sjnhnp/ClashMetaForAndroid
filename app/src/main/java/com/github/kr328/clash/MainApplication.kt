@@ -64,7 +64,7 @@ class MainApplication : Application() {
         
         extractAssetIfExists("geoip.metadb", File(clashDir, "geoip.metadb"))
         extractAssetIfExists("geosite.dat", File(clashDir, "geosite.dat"))
-        extractAssetIfExists("ASN.mmdb", File(clashDir, "ASN.mmdb"))
+        // ASN.mmdb removed to reduce APK size
     }
 
     fun finalize() {

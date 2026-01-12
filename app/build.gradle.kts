@@ -36,16 +36,16 @@ val geoFilesDownloadDir = "src/main/assets"
 
 task("downloadGeoFiles") {
 
-    val geoFilesUrls = mapOf(
+    val geoFilesUrls = mapOf<String, String>(
         // "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb" to "geoip.metadb",
         // "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat" to "geosite.dat",
         // "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/country.mmdb" to "country.mmdb",
-        "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb" to "ASN.mmdb",
+        // "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb" to "ASN.mmdb",
     )
 
     doLast {
         // Explicitly remove large databases to reduce APK size as requested
-        listOf("geoip.metadb", "geosite.dat").forEach { name ->
+        listOf("geoip.metadb", "geosite.dat", "ASN.mmdb").forEach { name ->
             val f = file("$geoFilesDownloadDir/$name")
             if (f.exists()) {
                 f.delete()

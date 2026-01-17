@@ -1,4 +1,4 @@
-import java.net.URL
+import java.net.URI
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
@@ -53,7 +53,7 @@ task("downloadGeoFiles") {
             }
         }
         geoFilesUrls.forEach { (downloadUrl, outputFileName) ->
-            val url = URL(downloadUrl)
+            val url = URI(downloadUrl).toURL()
             val outputPath = file("$geoFilesDownloadDir/$outputFileName")
             outputPath.parentFile.mkdirs()
             url.openStream().use { input ->

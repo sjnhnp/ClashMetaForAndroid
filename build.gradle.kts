@@ -2,7 +2,7 @@
 
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.BaseExtension
-import java.net.URL
+import java.net.URI
 import java.util.*
 
 buildscript {
@@ -176,7 +176,7 @@ subprojects {
 
         buildFeatures.apply {
             dataBinding {
-                isEnabled = name != "hideapi"
+                enable = name != "hideapi"
             }
         }
 
@@ -198,14 +198,14 @@ subprojects {
 }
 
 task("clean", type = Delete::class) {
-    delete(rootProject.buildDir)
+    delete(rootProject.layout.buildDirectory)
 }
 
 tasks.wrapper {
     distributionType = Wrapper.DistributionType.ALL
 
     doLast {
-        val sha256 = URL("$distributionUrl.sha256").openStream()
+        val sha256 = URI("$distributionUrl.sha256").toURL().openStream()
             .use { it.reader().readText().trim() }
 
         file("gradle/wrapper/gradle-wrapper.properties")

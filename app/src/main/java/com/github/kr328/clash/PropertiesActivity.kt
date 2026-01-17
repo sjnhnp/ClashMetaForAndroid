@@ -69,6 +69,7 @@ class PropertiesActivity : BaseActivity<PropertiesDesign>() {
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         design?.apply {
             launch {
@@ -77,7 +78,7 @@ class PropertiesActivity : BaseActivity<PropertiesDesign>() {
                         finish()
                 }
             }
-        } ?: return super.onBackPressed()
+        } ?: return onBackPressedDispatcher.onBackPressed()
     }
 
     private suspend fun PropertiesDesign.verifyAndCommit() {

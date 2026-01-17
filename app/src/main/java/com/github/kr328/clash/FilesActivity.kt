@@ -122,6 +122,7 @@ class FilesActivity : BaseActivity<FilesDesign>() {
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         design?.requests?.trySend(FilesDesign.Request.PopStack)
     }

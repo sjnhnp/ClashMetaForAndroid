@@ -143,7 +143,7 @@ abstract class BaseActivity<D : Design<*>> : AppCompatActivity(),
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        this.onBackPressed()
+        onBackPressedDispatcher.onBackPressed()
         return true
     }
 
@@ -199,7 +199,9 @@ abstract class BaseActivity<D : Design<*>> : AppCompatActivity(),
         window.isAllowForceDarkCompat = false
         window.isSystemBarsTranslucentCompat = true
         
+        @Suppress("DEPRECATION")
         window.statusBarColor = resolveThemedColor(android.R.attr.statusBarColor)
+        @Suppress("DEPRECATION")
         window.navigationBarColor = resolveThemedColor(android.R.attr.navigationBarColor)
 
         if (Build.VERSION.SDK_INT >= 23) {

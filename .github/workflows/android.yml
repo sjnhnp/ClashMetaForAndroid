@@ -143,10 +143,18 @@ jobs:
           path: app/build/outputs/apk/meta/debug/*.apk
           retention-days: 30
 
+      - name: Generate Changelog
+        id: changelog
+        if: steps.build_type.outputs.is_release == 'true'
+        uses: mikepenz/release-changelog-builder-action@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create Release
         if: steps.build_type.outputs.is_release == 'true'
         uses: softprops/action-gh-release@v1
         with:
+          body: ${{ steps.changelog.outputs.changelog }}
           tag_name: ${{ steps.build_type.outputs.version }}
           name: ${{ steps.build_type.outputs.version }}
           draft: false

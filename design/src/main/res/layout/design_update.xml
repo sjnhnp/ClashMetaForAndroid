@@ -115,7 +115,7 @@
                     <ImageView
                         android:layout_width="64dp"
                         android:layout_height="64dp"
-                        android:src="@drawable/ic_baseline_check_circle_24"
+                        android:src="@drawable/ic_baseline_check_circle"
                         android:tint="?attr/colorPrimary"
                         tools:ignore="UseAppTint" />
 
@@ -147,7 +147,7 @@
                     <ImageView
                         android:layout_width="64dp"
                         android:layout_height="64dp"
-                        android:src="@drawable/ic_baseline_error_24"
+                        android:src="@drawable/ic_baseline_error"
                         android:tint="?attr/colorError"
                         tools:ignore="UseAppTint" />
 

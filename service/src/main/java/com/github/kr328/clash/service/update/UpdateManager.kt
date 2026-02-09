@@ -243,7 +243,7 @@ class UpdateManager(private val context: Context) {
     
     companion object {
         // Default repository - can be changed for forks
-        var REPO_OWNER = "user" // Replace with your GitHub username
+        var REPO_OWNER = "sjnhnp" // Replace with your GitHub username
         var REPO_NAME = "ClashMetaForAndroid"
         
         /**

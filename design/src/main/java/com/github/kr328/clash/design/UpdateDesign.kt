@@ -35,7 +35,7 @@ class UpdateDesign(context: Context) : Design<UpdateDesign.Request>(context) {
         
         binding.scrollRoot.bindAppBarElevation(binding.activityBarLayout)
         
-        binding.activityBarLayout.findViewById<View>(R.id.activity_bar_close_view).setOnClickListener {
+        binding.activityBarLayout.findViewById<View>(R.id.activity_bar_close_view)?.setOnClickListener {
             requests.trySend(Request.Cancel)
         }
     }

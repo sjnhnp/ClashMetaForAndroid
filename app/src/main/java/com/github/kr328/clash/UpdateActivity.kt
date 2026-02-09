@@ -12,11 +12,8 @@ import com.github.kr328.clash.design.ui.ToastDuration
 import com.github.kr328.clash.service.update.DownloadProgress
 import com.github.kr328.clash.service.update.UpdateManager
 import com.github.kr328.clash.service.update.UpdateResult
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 
 class UpdateActivity : BaseActivity<UpdateDesign>() {
     
@@ -39,17 +36,25 @@ class UpdateActivity : BaseActivity<UpdateDesign>() {
     }
     
     override suspend fun main() {
-        val design = UpdateDesign(this)
+        val design = try {
+            UpdateDesign(this)
+        } catch (e: Exception) {
+            finish()
+            return
+        }
+        
         setContentDesign(design)
         
-        val versionCode = packageManager.getPackageInfo(packageName, 0).versionCodeCompat
         var cachedResult: UpdateResult? = null
+        var currentVersionCode: Long = 0
         
         try {
             // Start checking for updates
             design.setChecking(true)
             
-            val result = updateManager.checkForUpdate(versionCode, includePrerelease = false)
+            currentVersionCode = packageManager.getPackageInfo(packageName, 0).versionCodeCompat
+            
+            val result = updateManager.checkForUpdate(currentVersionCode, includePrerelease = false)
             cachedResult = result
             
             when (result) {
@@ -80,55 +85,59 @@ class UpdateActivity : BaseActivity<UpdateDesign>() {
         }
         
         while (isActive) {
-            when (val request = design.requests.receive()) {
-                UpdateDesign.Request.Download -> {
-                    val result = if (cachedResult is UpdateResult.UpdateAvailable) {
-                        cachedResult as UpdateResult.UpdateAvailable
-                    } else {
-                        val newResult = updateManager.checkForUpdate(versionCode, includePrerelease = false)
-                        cachedResult = newResult
-                        newResult as? UpdateResult.UpdateAvailable
+            try {
+                val request = design.requests.receive()
+                
+                when (request) {
+                    UpdateDesign.Request.Download -> {
+                        val result = if (cachedResult is UpdateResult.UpdateAvailable) {
+                            cachedResult as UpdateResult.UpdateAvailable
+                        } else {
+                            val newResult = updateManager.checkForUpdate(currentVersionCode, includePrerelease = false)
+                            cachedResult = newResult
+                            newResult as? UpdateResult.UpdateAvailable
+                        }
+                        
+                        if (result != null) {
+                            startDownload(design, result)
+                        } else {
+                            design.showError(getString(com.github.kr328.clash.design.R.string.update_check_failed))
+                        }
                     }
-                    
-                    if (result != null) {
-                        startDownload(design, result)
-                    } else {
-                        design.showError(getString(com.github.kr328.clash.design.R.string.update_check_failed))
-                    }
-                }
-                UpdateDesign.Request.Install -> {
-                    currentDownloadId.takeIf { it >= 0 }?.let { downloadId ->
-                        val file = updateManager.getDownloadedFile(downloadId)
-                        if (file != null && file.exists()) {
-                            if (!canInstallPackages()) {
-                                requestInstallPermission()
-                            } else {
-                                updateManager.installApk(file)
+                    UpdateDesign.Request.Install -> {
+                        currentDownloadId.takeIf { it >= 0 }?.let { downloadId ->
+                            val file = updateManager.getDownloadedFile(downloadId)
+                            if (file != null && file.exists()) {
+                                if (!canInstallPackages()) {
+                                    requestInstallPermission()
+                                } else {
+                                    updateManager.installApk(file)
+                                }
                             }
                         }
                     }
-                }
-                UpdateDesign.Request.OpenInBrowser -> {
-                    var result = cachedResult
-                    
-                    if (result == null || result is UpdateResult.Error) {
-                        result = updateManager.checkForUpdate(versionCode, includePrerelease = false)
-                        cachedResult = result
+                    UpdateDesign.Request.OpenInBrowser -> {
+                        var result = cachedResult
+                        
+                        if (result == null || result is UpdateResult.Error) {
+                            result = updateManager.checkForUpdate(currentVersionCode, includePrerelease = false)
+                            cachedResult = result
+                        }
+                        
+                        if (result is UpdateResult.UpdateAvailable) {
+                            openUrl(result.releaseInfo.htmlUrl)
+                        } else if (result is UpdateResult.NoApkFound) {
+                            openUrl(result.releaseInfo.htmlUrl)
+                        }
                     }
-                    
-                    if (result is UpdateResult.UpdateAvailable) {
-                        openUrl(result.releaseInfo.htmlUrl)
-                    } else if (result is UpdateResult.NoApkFound) {
-                        openUrl(result.releaseInfo.htmlUrl)
-                    } else {
-                        // If we still can't get the URL, standard fallback could be opening releases page
-                        // but we don't have the repo URL handy here without duplicating logic.
-                        // For now just ignore or maybe show toast.
+                    UpdateDesign.Request.Cancel -> {
+                        finish()
                     }
                 }
-                UpdateDesign.Request.Cancel -> {
-                    finish()
-                }
+            } catch (e: CancellationException) {
+                break
+            } catch (e: Exception) {
+                // Ignore listener exceptions
             }
         }
     }

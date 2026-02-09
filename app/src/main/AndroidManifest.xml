@@ -16,8 +16,6 @@
         tools:ignore="QueryAllPackagesPermission" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <!-- For app updates -->
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
         android:name=".MainApplication"
@@ -221,22 +219,5 @@
                 <data android:scheme="android_secret_code" android:host="252746382" />
             </intent-filter>
         </receiver>
-
-        <activity
-            android:name=".UpdateActivity"
-            android:configChanges="uiMode"
-            android:exported="false"
-            android:label="@string/check_update" />
-
-        <!-- FileProvider for sharing downloaded APK files -->
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.update"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/update_file_paths" />
-        </provider>
     </application>
 </manifest>

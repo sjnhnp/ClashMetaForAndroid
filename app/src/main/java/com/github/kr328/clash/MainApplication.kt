@@ -6,7 +6,6 @@ import com.github.kr328.clash.common.Global
 import com.github.kr328.clash.common.compat.currentProcessName
 import com.github.kr328.clash.common.log.Log
 import com.github.kr328.clash.remote.Remote
-import com.github.kr328.clash.service.update.UpdateManager
 import com.github.kr328.clash.service.util.sendServiceRecreated
 import com.github.kr328.clash.util.clashDir
 import java.io.File
@@ -31,13 +30,6 @@ class MainApplication : Application() {
 
         if (processName == packageName) {
             Remote.launch()
-            
-            // Configure update repository
-            // Change these to your GitHub username and repo name
-            UpdateManager.configureRepository(
-                owner = "sjnhnp",  // Your GitHub username
-                repo = "ClashMetaForAndroid"
-            )
         } else {
             sendServiceRecreated()
         }

@@ -9,7 +9,6 @@ object GithubMirror {
     
     private val GITHUB_DOMAINS = listOf(
         "github.com",
-        "api.github.com",
         "raw.githubusercontent.com",
         "gist.githubusercontent.com",
         "objects.githubusercontent.com",

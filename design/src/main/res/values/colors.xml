@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="color_clash_light">#1e4376</color>
-    <color name="color_clash_dark">#1976d2</color>
-    <color name="color_system_ui_overlay">#50000000</color>
-    <color name="color_light_background">#FFFAFAFA</color>
-    <color name="color_dark_background">#FF121212</color>
-    <color name="color_dark_surface">#FF202020</color>
-    <color name="color_light_clash_stopped">#FF808080</color>
-    <color name="color_light_control_disabled">#FFD3D3D3</color>
-    <color name="color_dark_control_disabled">#FF808080</color>
-    <color name="color_error">#FFB00020</color>
+    <color name="color_clash_light">#005FB0</color>
+    <color name="color_clash_dark">#007ACC</color>
+    <color name="color_system_ui_overlay">#33000000</color>
+    <color name="color_light_background">#F8F9FA</color>
+    <color name="color_dark_background">#0A0A0A</color>
+    <color name="color_dark_surface">#161616</color>
+    <color name="color_light_clash_stopped">#6C757D</color>
+    <color name="color_light_control_disabled">#E9ECEF</color>
+    <color name="color_dark_control_disabled">#343A40</color>
+    <color name="color_error">#DC3545</color>
+    
+    <!-- Premium Accents -->
+    <color name="color_glass_white">#BCFFFFFF</color>
+    <color name="color_glass_black">#BC161616</color>
+    <color name="color_text_primary_light">#212529</color>
+    <color name="color_text_secondary_light">#6C757D</color>
+    <color name="color_text_primary_dark">#E9ECEF</color>
+    <color name="color_text_secondary_dark">#ADB5BD</color>
 </resources>

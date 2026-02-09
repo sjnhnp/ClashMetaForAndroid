@@ -30,7 +30,8 @@ class UpdateDesign(context: Context) : Design<UpdateDesign.Request>(context) {
         binding.self = this
         
         binding.activityBarLayout.applyFrom(context)
-        binding.activityBarLayout.title = context.getString(R.string.check_update)
+        binding.activityBarLayout.findViewById<android.widget.TextView>(R.id.activity_bar_title_view)?.text = 
+            context.getString(R.string.check_update)
         
         binding.scrollRoot.bindAppBarElevation(binding.activityBarLayout)
         

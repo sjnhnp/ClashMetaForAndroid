@@ -42,13 +42,17 @@ class UpdateActivity : BaseActivity<UpdateDesign>() {
         val design = UpdateDesign(this)
         setContentDesign(design)
         
+        val versionCode = packageManager.getPackageInfo(packageName, 0).versionCodeCompat
+        var cachedResult: UpdateResult? = null
+        
         try {
             // Start checking for updates
             design.setChecking(true)
             
-            val versionCode = packageManager.getPackageInfo(packageName, 0).versionCodeCompat
+            val result = updateManager.checkForUpdate(versionCode, includePrerelease = false)
+            cachedResult = result
             
-            when (val result = updateManager.checkForUpdate(versionCode, includePrerelease = false)) {
+            when (result) {
                 is UpdateResult.UpdateAvailable -> {
                     design.setChecking(false)
                     design.showUpdateAvailable(
@@ -78,9 +82,18 @@ class UpdateActivity : BaseActivity<UpdateDesign>() {
         while (isActive) {
             when (val request = design.requests.receive()) {
                 UpdateDesign.Request.Download -> {
-                    val result = updateManager.checkForUpdate(versionCode, includePrerelease = false)
-                    if (result is UpdateResult.UpdateAvailable) {
+                    val result = if (cachedResult is UpdateResult.UpdateAvailable) {
+                        cachedResult as UpdateResult.UpdateAvailable
+                    } else {
+                        val newResult = updateManager.checkForUpdate(versionCode, includePrerelease = false)
+                        cachedResult = newResult
+                        newResult as? UpdateResult.UpdateAvailable
+                    }
+                    
+                    if (result != null) {
                         startDownload(design, result)
+                    } else {
+                        design.showError(getString(com.github.kr328.clash.design.R.string.update_check_failed))
                     }
                 }
                 UpdateDesign.Request.Install -> {
@@ -96,11 +109,21 @@ class UpdateActivity : BaseActivity<UpdateDesign>() {
                     }
                 }
                 UpdateDesign.Request.OpenInBrowser -> {
-                    val result = updateManager.checkForUpdate(versionCode, includePrerelease = false)
+                    var result = cachedResult
+                    
+                    if (result == null || result is UpdateResult.Error) {
+                        result = updateManager.checkForUpdate(versionCode, includePrerelease = false)
+                        cachedResult = result
+                    }
+                    
                     if (result is UpdateResult.UpdateAvailable) {
                         openUrl(result.releaseInfo.htmlUrl)
                     } else if (result is UpdateResult.NoApkFound) {
                         openUrl(result.releaseInfo.htmlUrl)
+                    } else {
+                        // If we still can't get the URL, standard fallback could be opening releases page
+                        // but we don't have the repo URL handy here without duplicating logic.
+                        // For now just ignore or maybe show toast.
                     }
                 }
                 UpdateDesign.Request.Cancel -> {

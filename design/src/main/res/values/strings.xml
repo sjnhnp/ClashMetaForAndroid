@@ -391,4 +391,23 @@
     <string name="deleting_backups">Deleting backups…</string>
     <string name="deleted_n_backups">Deleted %d backup(s)</string>
     <string name="deleted_with_errors">Deleted %1$d backup(s), %2$d failed</string>
+
+    <!-- Update -->
+    <string name="check_update">Check for Updates</string>
+    <string name="check_update_summary">Check for new app versions</string>
+    <string name="checking_for_updates">Checking for updates…</string>
+    <string name="new_version_available">New version available</string>
+    <string name="already_latest_version">Already up to date</string>
+    <string name="no_update_available">You are using the latest version</string>
+    <string name="update_check_failed">Update check failed</string>
+    <string name="update_no_apk_found">No APK found in this release</string>
+    <string name="changelog">Changelog</string>
+    <string name="no_changelog">No changelog available</string>
+    <string name="format_file_size">Size: %s</string>
+    <string name="download">Download</string>
+    <string name="downloading">Downloading…</string>
+    <string name="downloading_update">Downloading update</string>
+    <string name="download_failed">Download failed</string>
+    <string name="install">Install</string>
+    <string name="open_in_browser">Open in Browser</string>
 </resources>

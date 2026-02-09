@@ -10,7 +10,7 @@ import com.github.kr328.clash.design.util.root
 
 class SettingsDesign(context: Context) : Design<SettingsDesign.Request>(context) {
     enum class Request {
-        StartApp, StartNetwork, StartGistBackup,
+        StartApp, StartNetwork, StartGistBackup, StartUpdate,
     }
 
     private val binding = DesignSettingsBinding

@@ -302,4 +302,23 @@
     <string name="deleting_backups">正在删除备份…</string>
     <string name="deleted_n_backups">已删除 %d 个备份</string>
     <string name="deleted_with_errors">已删除 %1$d 个备份，%2$d 个失败</string>
+
+    <!-- 更新 -->
+    <string name="check_update">检查更新</string>
+    <string name="check_update_summary">检查应用新版本</string>
+    <string name="checking_for_updates">正在检查更新…</string>
+    <string name="new_version_available">发现新版本</string>
+    <string name="already_latest_version">已是最新版本</string>
+    <string name="no_update_available">您正在使用最新版本</string>
+    <string name="update_check_failed">检查更新失败</string>
+    <string name="update_no_apk_found">此版本没有找到 APK 文件</string>
+    <string name="changelog">更新日志</string>
+    <string name="no_changelog">暂无更新日志</string>
+    <string name="format_file_size">大小：%s</string>
+    <string name="download">下载</string>
+    <string name="downloading">正在下载…</string>
+    <string name="downloading_update">正在下载更新</string>
+    <string name="download_failed">下载失败</string>
+    <string name="install">安装</string>
+    <string name="open_in_browser">在浏览器中打开</string>
 </resources>

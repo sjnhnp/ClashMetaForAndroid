@@ -24,6 +24,8 @@ class SettingsActivity : BaseActivity<SettingsDesign>() {
                             startActivity(NetworkSettingsActivity::class.intent)
                         SettingsDesign.Request.StartGistBackup ->
                             startActivity(GistBackupActivity::class.intent)
+                        SettingsDesign.Request.StartUpdate ->
+                            startActivity(UpdateActivity::class.intent)
                     }
                 }
             }

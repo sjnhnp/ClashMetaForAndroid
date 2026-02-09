@@ -25,10 +25,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Step 1: 拉取官方内核
           git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
           git submodule update --init --recursive
+          
+          # Step 2: 更新到官方最新稳定版
           cd core/src/foss/golang/clash
-          # Fetch latest stable release tag instead of Alpha branch
           git fetch https://github.com/MetaCubeX/mihomo.git --tags
           LATEST_TAG=$(git tag -l 'v*' | grep -v 'alpha\|beta\|rc' | sort -V | tail -1)
           if [ -z "$LATEST_TAG" ]; then
@@ -39,6 +41,16 @@ jobs:
           git checkout -f "$LATEST_TAG"
           echo "Updated Mihomo kernel to:"
           git log -1 --format="%h - %s"
+          cd -
+          
+          # Step 3: 应用精简补丁（移除不需要的协议）
+          if [ -f "patches/slim-kernel.patch" ]; then
+            echo "Applying slim kernel patch to remove unwanted protocols..."
+            cd core/src/foss/golang/clash
+            git apply ../../../../../patches/slim-kernel.patch || echo "Patch may need updating for new kernel version"
+            cd -
+          fi
+
 
       - name: Setup Java
         uses: actions/setup-java@v4

@@ -5,6 +5,7 @@
 
     <data>
         <import type="android.view.View" />
+        <import type="com.github.kr328.clash.design.UpdateDesign.Request" />
 
         <variable
             name="self"
@@ -177,7 +178,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
-                        android:onClick="@{() -> self.request(UpdateDesign.Request.OpenInBrowser)}"
+                        android:onClick="@{() -> self.request(Request.OpenInBrowser)}"
                         android:text="@string/open_in_browser"
                         style="@style/Widget.Material3.Button.OutlinedButton" />
                 </LinearLayout>
@@ -293,7 +294,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginEnd="8dp"
-                            android:onClick="@{() -> self.request(UpdateDesign.Request.OpenInBrowser)}"
+                            android:onClick="@{() -> self.request(Request.OpenInBrowser)}"
                             android:text="@string/open_in_browser"
                             style="@style/Widget.Material3.Button.TextButton" />
 
@@ -301,7 +302,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:enabled="@{!downloading}"
-                            android:onClick="@{() -> self.request(downloadComplete ? UpdateDesign.Request.Install : UpdateDesign.Request.Download)}"
+                            android:onClick="@{() -> self.request(downloadComplete ? Request.Install : Request.Download)}"
                             android:text="@{downloadComplete ? @string/install : @string/download}"
                             tools:text="Download" />
                     </LinearLayout>

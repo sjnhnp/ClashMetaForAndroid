@@ -121,7 +121,12 @@ class UpdateManager(private val context: Context) {
             setMimeType("application/vnd.android.package-archive")
         }
         
-        return downloadManager.enqueue(request)
+        return try {
+            downloadManager.enqueue(request)
+        } catch (e: Exception) {
+            Log.w("Failed to start download: ${e.message}", e)
+            -1L
+        }
     }
     
     /**
@@ -130,6 +135,8 @@ class UpdateManager(private val context: Context) {
      * @return DownloadProgress with current status
      */
     fun getDownloadProgress(downloadId: Long): DownloadProgress {
+        if (downloadId < 0) return DownloadProgress.Failed(-1)
+
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         val query = DownloadManager.Query().setFilterById(downloadId)
         
@@ -194,6 +201,8 @@ class UpdateManager(private val context: Context) {
      * Get downloaded file path.
      */
     fun getDownloadedFile(downloadId: Long): File? {
+        if (downloadId < 0) return null
+
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         val query = DownloadManager.Query().setFilterById(downloadId)
         

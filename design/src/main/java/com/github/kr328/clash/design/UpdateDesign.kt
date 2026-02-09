@@ -30,14 +30,32 @@ class UpdateDesign(context: Context) : Design<UpdateDesign.Request>(context) {
         binding.self = this
         
         binding.activityBarLayout.applyFrom(context)
-        binding.activityBarLayout.findViewById<android.widget.TextView>(R.id.activity_bar_title_view)?.text = 
-            context.getString(R.string.check_update)
+        
+        binding.activityBarLayout
+            .findViewById<android.widget.TextView>(R.id.activity_bar_title_view)
+            ?.text = context.getString(R.string.check_update)
         
         binding.scrollRoot.bindAppBarElevation(binding.activityBarLayout)
         
-        binding.activityBarLayout.findViewById<View>(R.id.activity_bar_close_view)?.setOnClickListener {
-            requests.trySend(Request.Cancel)
-        }
+        binding.activityBarLayout
+            .findViewById<View>(R.id.activity_bar_close_view)
+            ?.setOnClickListener {
+                requests.trySend(Request.Cancel)
+            }
+
+        // Initialize all binding states to prevent NPE
+        binding.checking = false
+        binding.hasUpdate = false
+        binding.noUpdate = false
+        binding.downloading = false
+        binding.downloadComplete = false
+        binding.hasError = false
+        binding.versionName = ""
+        binding.changelog = ""
+        binding.fileSize = ""
+        binding.errorMessage = ""
+        binding.downloadProgress = 0f
+        binding.downloadProgressText = ""
     }
     
     suspend fun setChecking(checking: Boolean) = withContext(Dispatchers.Main) {

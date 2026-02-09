@@ -26,6 +26,9 @@ class UpdateDesign(context: Context) : Design<UpdateDesign.Request>(context) {
     
     init {
         binding.self = this
+        binding.toolbar.setNavigationOnClickListener {
+            request(Request.Cancel)
+        }
     }
     
     suspend fun setChecking(checking: Boolean) = withContext(Dispatchers.Main) {

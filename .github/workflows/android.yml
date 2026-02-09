@@ -4,10 +4,23 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g., v2.11.22). Leave empty for debug build.'
+        description: 'Release version (e.g., v3.0.4). Leave empty to auto-increment from latest release.'
         required: false
         default: ''
         type: string
+      kernel_version:
+        description: 'Mihomo kernel version'
+        required: true
+        default: 'stable'
+        type: choice
+        options:
+          - stable
+          - alpha
+      apply_slim_patch:
+        description: 'Apply slim kernel patch (remove unused protocols)'
+        required: true
+        default: true
+        type: boolean
 
 jobs:
   build:
@@ -21,36 +34,88 @@ jobs:
           submodules: recursive
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Determine version
+        id: version_info
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ -n "${{ github.event.inputs.version }}" ]]; then
+            # User provided version
+            VERSION="${{ github.event.inputs.version }}"
+            echo "Using user-provided version: $VERSION"
+          else
+            # Auto-increment from latest release
+            echo "Fetching latest release version..."
+            LATEST_TAG=$(gh release view --json tagName -q '.tagName' 2>/dev/null || echo "")
+            
+            if [[ -z "$LATEST_TAG" ]]; then
+              # No previous release, start from v3.0.1
+              VERSION="v3.0.1"
+              echo "No previous release found, starting from $VERSION"
+            else
+              echo "Latest release: $LATEST_TAG"
+              # Remove 'v' prefix and split
+              VERSION_NUM="${LATEST_TAG#v}"
+              IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION_NUM"
+              
+              # Increment patch version
+              PATCH=$((PATCH + 1))
+              VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+              echo "Auto-incremented version: $VERSION"
+            fi
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "is_release=true" >> $GITHUB_OUTPUT
+
       - name: Update Submodules (Mihomo Kernel)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          KERNEL_VERSION: ${{ github.event.inputs.kernel_version }}
         run: |
           # Step 1: 拉取官方内核
           git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
           git submodule update --init --recursive
           
-          # Step 2: 更新到官方最新稳定版
+          # Step 2: 更新到目标版本
           cd core/src/foss/golang/clash
           git fetch https://github.com/MetaCubeX/mihomo.git --tags
-          LATEST_TAG=$(git tag -l 'v*' | grep -v 'alpha\|beta\|rc' | sort -V | tail -1)
-          if [ -z "$LATEST_TAG" ]; then
-            echo "No stable release tag found, using latest tag"
-            LATEST_TAG=$(git tag -l 'v*' | sort -V | tail -1)
+          
+          if [[ "$KERNEL_VERSION" == "alpha" ]]; then
+            # 获取最新 alpha 版本
+            LATEST_TAG=$(git tag -l 'v*-alpha*' | sort -V | tail -1)
+            if [ -z "$LATEST_TAG" ]; then
+              echo "No alpha tag found, falling back to latest tag"
+              LATEST_TAG=$(git tag -l 'v*' | sort -V | tail -1)
+            fi
+            echo "Using Mihomo ALPHA kernel version: $LATEST_TAG"
+          else
+            # 获取最新稳定版
+            LATEST_TAG=$(git tag -l 'v*' | grep -v 'alpha\|beta\|rc' | sort -V | tail -1)
+            if [ -z "$LATEST_TAG" ]; then
+              echo "No stable release tag found, using latest tag"
+              LATEST_TAG=$(git tag -l 'v*' | sort -V | tail -1)
+            fi
+            echo "Using Mihomo STABLE kernel version: $LATEST_TAG"
           fi
-          echo "Using Mihomo kernel version: $LATEST_TAG"
+          
           git checkout -f "$LATEST_TAG"
+          echo "KERNEL_TAG=$LATEST_TAG" >> $GITHUB_ENV
           echo "Updated Mihomo kernel to:"
           git log -1 --format="%h - %s"
           cd -
-          
-          # Step 3: 应用精简补丁（移除不需要的协议）
+
+      - name: Apply Slim Kernel Patch
+        if: ${{ github.event.inputs.apply_slim_patch == 'true' }}
+        run: |
           if [ -f "patches/slim-kernel.patch" ]; then
             echo "Applying slim kernel patch to remove unwanted protocols..."
             cd core/src/foss/golang/clash
             git apply ../../../../../patches/slim-kernel.patch || echo "Patch may need updating for new kernel version"
             cd -
+          else
+            echo "No slim-kernel.patch found, skipping..."
           fi
-
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -74,24 +139,9 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Determine build type
-        id: build_type
-        run: |
-          if [[ "${{ github.event.inputs.version }}" != "" ]]; then
-            echo "is_release=true" >> $GITHUB_OUTPUT
-            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            echo "is_release=true" >> $GITHUB_OUTPUT
-            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-          else
-            echo "is_release=false" >> $GITHUB_OUTPUT
-            echo "version=debug" >> $GITHUB_OUTPUT
-          fi
-
       - name: Update version in build.gradle.kts
-        if: steps.build_type.outputs.is_release == 'true'
         run: |
-          VERSION="${{ steps.build_type.outputs.version }}"
+          VERSION="${{ steps.version_info.outputs.version }}"
           # Remove 'v' prefix if present
           VERSION_NAME="${VERSION#v}"
           # Convert version to code (e.g., 3.0.3 -> 300003)
@@ -107,8 +157,7 @@ jobs:
           # Verify
           grep -E "versionName|versionCode" build.gradle.kts | head -2
 
-      - name: Setup Signing (for release)
-        if: steps.build_type.outputs.is_release == 'true'
+      - name: Setup Signing
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -119,7 +168,7 @@ jobs:
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "Using keystore from GitHub Secrets"
             echo "$KEYSTORE_BASE64" | base64 -d > release.keystore
-            cat > signing.properties << EOF
+            cat > signing.properties <<EOF
           keystore.password=${KEYSTORE_PASSWORD}
           key.alias=${KEY_ALIAS}
           key.password=${KEY_PASSWORD}
@@ -132,7 +181,7 @@ jobs:
               -storepass clashmetaandroid \
               -keypass clashmetaandroid \
               -dname "CN=ClashMetaForAndroid, OU=Dev, O=CMFA, L=Beijing, ST=Beijing, C=CN"
-            cat > signing.properties << EOF
+            cat > signing.properties <<EOF
           keystore.password=clashmetaandroid
           key.alias=clash-meta
           key.password=clashmetaandroid
@@ -140,37 +189,29 @@ jobs:
           fi
 
       - name: Build Release APK
-        if: steps.build_type.outputs.is_release == 'true'
         run: ./gradlew assembleMetaRelease --stacktrace
-
-      - name: Build Debug APK
-        if: steps.build_type.outputs.is_release == 'false'
-        run: ./gradlew assembleMetaDebug --stacktrace
-
-      - name: Upload Debug APK
-        if: steps.build_type.outputs.is_release == 'false'
-        uses: actions/upload-artifact@v4
-        with:
-          name: clash-meta-android-debug
-          path: app/build/outputs/apk/meta/debug/*.apk
-          retention-days: 30
 
       - name: Generate Changelog
         id: changelog
-        if: steps.build_type.outputs.is_release == 'true'
         uses: mikepenz/release-changelog-builder-action@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Release
-        if: steps.build_type.outputs.is_release == 'true'
         uses: softprops/action-gh-release@v1
         with:
-          body: ${{ steps.changelog.outputs.changelog }}
-          tag_name: ${{ steps.build_type.outputs.version }}
-          name: ${{ steps.build_type.outputs.version }}
+          body: |
+            ## Mihomo Kernel
+            - Version: `${{ env.KERNEL_TAG }}`
+            - Type: ${{ github.event.inputs.kernel_version == 'alpha' && '🧪 Alpha' || '✅ Stable' }}
+            - Slim Patch: ${{ github.event.inputs.apply_slim_patch == 'true' && '✅ Applied' || '❌ Not applied' }}
+            
+            ## Changes
+            ${{ steps.changelog.outputs.changelog }}
+          tag_name: ${{ steps.version_info.outputs.version }}
+          name: ${{ steps.version_info.outputs.version }}
           draft: false
-          prerelease: false
+          prerelease: ${{ github.event.inputs.kernel_version == 'alpha' }}
           files: |
             app/build/outputs/apk/meta/release/*.apk
         env:

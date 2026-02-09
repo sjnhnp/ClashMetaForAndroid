@@ -70,42 +70,43 @@ class UpdateActivity : BaseActivity<UpdateDesign>() {
                     design.showError(result.exception.message ?: getString(com.github.kr328.clash.design.R.string.unknown_error))
                 }
             }
-            
-            while (isActive) {
-                when (val request = design.requests.receive()) {
-                    UpdateDesign.Request.Download -> {
-                        val result = updateManager.checkForUpdate(versionCode, includePrerelease = false)
-                        if (result is UpdateResult.UpdateAvailable) {
-                            startDownload(design, result)
-                        }
+        } catch (e: Exception) {
+            design.setChecking(false)
+            design.showError(e.message ?: getString(com.github.kr328.clash.design.R.string.unknown_error))
+        }
+        
+        while (isActive) {
+            when (val request = design.requests.receive()) {
+                UpdateDesign.Request.Download -> {
+                    val result = updateManager.checkForUpdate(versionCode, includePrerelease = false)
+                    if (result is UpdateResult.UpdateAvailable) {
+                        startDownload(design, result)
                     }
-                    UpdateDesign.Request.Install -> {
-                        currentDownloadId.takeIf { it >= 0 }?.let { downloadId ->
-                            val file = updateManager.getDownloadedFile(downloadId)
-                            if (file != null && file.exists()) {
-                                if (!canInstallPackages()) {
-                                    requestInstallPermission()
-                                } else {
-                                    updateManager.installApk(file)
-                                }
+                }
+                UpdateDesign.Request.Install -> {
+                    currentDownloadId.takeIf { it >= 0 }?.let { downloadId ->
+                        val file = updateManager.getDownloadedFile(downloadId)
+                        if (file != null && file.exists()) {
+                            if (!canInstallPackages()) {
+                                requestInstallPermission()
+                            } else {
+                                updateManager.installApk(file)
                             }
                         }
                     }
-                    UpdateDesign.Request.OpenInBrowser -> {
-                        val result = updateManager.checkForUpdate(versionCode, includePrerelease = false)
-                        if (result is UpdateResult.UpdateAvailable) {
-                            openUrl(result.releaseInfo.htmlUrl)
-                        } else if (result is UpdateResult.NoApkFound) {
-                            openUrl(result.releaseInfo.htmlUrl)
-                        }
-                    }
-                    UpdateDesign.Request.Cancel -> {
-                        finish()
+                }
+                UpdateDesign.Request.OpenInBrowser -> {
+                    val result = updateManager.checkForUpdate(versionCode, includePrerelease = false)
+                    if (result is UpdateResult.UpdateAvailable) {
+                        openUrl(result.releaseInfo.htmlUrl)
+                    } else if (result is UpdateResult.NoApkFound) {
+                        openUrl(result.releaseInfo.htmlUrl)
                     }
                 }
+                UpdateDesign.Request.Cancel -> {
+                    finish()
+                }
             }
-        } catch (e: Exception) {
-            design.showError(e.message ?: "Unknown error")
         }
     }
     

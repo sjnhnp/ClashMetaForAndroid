@@ -4,6 +4,8 @@ import android.content.Context
 import android.text.format.Formatter
 import android.view.View
 import com.github.kr328.clash.design.databinding.DesignUpdateBinding
+import com.github.kr328.clash.design.util.applyFrom
+import com.github.kr328.clash.design.util.bindAppBarElevation
 import com.github.kr328.clash.design.util.layoutInflater
 import com.github.kr328.clash.design.util.root
 import kotlinx.coroutines.Dispatchers
@@ -26,8 +28,14 @@ class UpdateDesign(context: Context) : Design<UpdateDesign.Request>(context) {
     
     init {
         binding.self = this
-        binding.toolbar.setNavigationOnClickListener {
-            request(Request.Cancel)
+        
+        binding.activityBarLayout.applyFrom(context)
+        binding.activityBarLayout.title = context.getString(R.string.check_update)
+        
+        binding.scrollRoot.bindAppBarElevation(binding.activityBarLayout)
+        
+        binding.activityBarLayout.findViewById<View>(R.id.activity_bar_close_view).setOnClickListener {
+            requests.trySend(Request.Cancel)
         }
     }
     

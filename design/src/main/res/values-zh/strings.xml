@@ -304,4 +304,11 @@
     <string name="deleting_backups">正在删除备份…</string>
     <string name="deleted_n_backups">已删除 %d 个备份</string>
     <string name="deleted_with_errors">已删除 %1$d 个备份，%2$d 个失败</string>
+
+    <string name="shortcut_toggle_short">切换 Clash</string>
+    <string name="shortcut_toggle_long">切换 Clash 服务启停</string>
+    <string name="shortcut_start_short">启动 Clash</string>
+    <string name="shortcut_start_long">启动 Clash 服务</string>
+    <string name="shortcut_stop_short">停止 Clash</string>
+    <string name="shortcut_stop_long">停止 Clash 服务</string>
 </resources>

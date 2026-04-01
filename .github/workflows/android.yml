@@ -130,11 +130,13 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          accept-android-sdk-licenses: true
 
       - name: Accept Android Licenses
         run: |
+          mkdir -p "$ANDROID_HOME/licenses"
+          echo -e "\n24333f8a63b6825ea9c5514f83c2829b004d1fee" > "$ANDROID_HOME/licenses/android-sdk-license"
+          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
+          echo -e "\nd975f751698a77b662f1254ddbeed3901e976f5a" >> "$ANDROID_HOME/licenses/android-sdk-license"
           yes | sdkmanager --licenses || true
 
       - name: Setup NDK

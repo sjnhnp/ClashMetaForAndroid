@@ -1,5 +1,5 @@
 diff --git a/adapter/parser.go b/adapter/parser.go
-index 290a4a8f..06274154 100644
+index 9c959106..550d96cd 100644
 --- a/adapter/parser.go
 +++ b/adapter/parser.go
 @@ -33,27 +33,8 @@ func ParseProxy(mapping map[string]any, options ...ProxyOption) (C.Proxy, error)
@@ -32,7 +32,7 @@ index 290a4a8f..06274154 100644
  	case "vmess":
  		vmessOption := &outbound.VmessOption{BasicOption: basicOption}
  		err = decoder.Decode(mapping, vmessOption)
-@@ -68,13 +49,7 @@ func ParseProxy(mapping map[string]any, options ...ProxyOption) (C.Proxy, error)
+@@ -68,13 +49,8 @@ func ParseProxy(mapping map[string]any, options ...ProxyOption) (C.Proxy, error)
  			break
  		}
  		proxy, err = outbound.NewVless(*vlessOption)
@@ -44,10 +44,11 @@ index 290a4a8f..06274154 100644
 -		}
 -		proxy, err = outbound.NewSnell(*snellOption)
 +
++
  	case "trojan":
  		trojanOption := &outbound.TrojanOption{BasicOption: basicOption}
  		err = decoder.Decode(mapping, trojanOption)
-@@ -82,13 +57,7 @@ func ParseProxy(mapping map[string]any, options ...ProxyOption) (C.Proxy, error)
+@@ -82,13 +58,8 @@ func ParseProxy(mapping map[string]any, options ...ProxyOption) (C.Proxy, error)
  			break
  		}
  		proxy, err = outbound.NewTrojan(*trojanOption)
@@ -59,10 +60,11 @@ index 290a4a8f..06274154 100644
 -		}
 -		proxy, err = outbound.NewHysteria(*hyOption)
 +
++
  	case "hysteria2":
  		hyOption := &outbound.Hysteria2Option{BasicOption: basicOption}
  		err = decoder.Decode(mapping, hyOption)
-@@ -96,20 +65,7 @@ func ParseProxy(mapping map[string]any, options ...ProxyOption) (C.Proxy, error)
+@@ -96,20 +67,8 @@ func ParseProxy(mapping map[string]any, options ...ProxyOption) (C.Proxy, error)
  			break
  		}
  		proxy, err = outbound.NewHysteria2(*hyOption)
@@ -81,10 +83,11 @@ index 290a4a8f..06274154 100644
 -		}
 -		proxy, err = outbound.NewTuic(*tuicOption)
 +
++
  	case "direct":
  		directOption := &outbound.DirectOption{BasicOption: basicOption}
  		err = decoder.Decode(mapping, directOption)
-@@ -131,41 +87,8 @@ func ParseProxy(mapping map[string]any, options ...ProxyOption) (C.Proxy, error)
+@@ -131,48 +102,8 @@ func ParseProxy(mapping map[string]any, options ...ProxyOption) (C.Proxy, error)
  			break
  		}
  		proxy = outbound.NewRejectWithOption(*rejectOption)
@@ -123,6 +126,13 @@ index 290a4a8f..06274154 100644
 -			break
 -		}
 -		proxy, err = outbound.NewMasque(*masqueOption)
+-	case "trusttunnel":
+-		trustTunnelOption := &outbound.TrustTunnelOption{BasicOption: basicOption}
+-		err = decoder.Decode(mapping, trustTunnelOption)
+-		if err != nil {
+-			break
+-		}
+-		proxy, err = outbound.NewTrustTunnel(*trustTunnelOption)
 +
 +
  	default:

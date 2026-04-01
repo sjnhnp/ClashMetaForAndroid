@@ -111,7 +111,7 @@ jobs:
           if [ -f "patches/slim-kernel.patch" ]; then
             echo "Applying slim kernel patch to remove unwanted protocols..."
             cd core/src/foss/golang/clash
-            git apply ../../../../../patches/slim-kernel.patch || echo "Patch may need updating for new kernel version"
+            git apply ../../../../../patches/slim-kernel.patch
             cd -
           else
             echo "No slim-kernel.patch found, skipping..."
@@ -123,8 +123,15 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          accept-android-sdk-licenses: true
 
       - name: Accept Android Licenses
         run: |

@@ -5,6 +5,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import com.github.kr328.clash.design.store.UiStore.Companion.mainActivityAlias
 
 class DialerReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -18,13 +19,12 @@ class DialerReceiver : BroadcastReceiver() {
     }
     
     private fun restoreAppIcon(context: Context) {
-        val aliasComponentName = ComponentName(context, mainActivityAlias)
-        val currentState = context.packageManager.getComponentEnabledSetting(aliasComponentName)
+        val currentState = context.packageManager.getComponentEnabledSetting(context.mainActivityAlias)
         
         // 如果图标被隐藏（组件被禁用），则恢复它
         if (currentState == PackageManager.COMPONENT_ENABLED_STATE_DISABLED) {
             context.packageManager.setComponentEnabledSetting(
-                aliasComponentName,
+                context.mainActivityAlias,
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
                 PackageManager.DONT_KILL_APP
             )
